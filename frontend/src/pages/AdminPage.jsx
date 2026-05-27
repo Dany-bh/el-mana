@@ -185,26 +185,26 @@ const AdminPage = () => {
   ];
 
   return (
-    <div className="flex flex-col md:flex-row gap-8 min-h-[calc(100vh-140px)] animate-in fade-in duration-500">
+    <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 min-h-[calc(100vh-140px)] animate-in fade-in duration-500">
       {/* Sidebar Admin */}
-      <div className="w-full md:w-72 flex flex-col gap-2">
-        <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-4">
-          <p className="px-4 py-2 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Administración</p>
+      <div className="w-full lg:w-72 shrink-0">
+        <div className="bg-white rounded-3xl lg:rounded-[2rem] shadow-sm border border-gray-100 p-2.5 lg:p-4 flex flex-row lg:flex-col gap-2 overflow-x-auto no-scrollbar">
+          <p className="px-4 py-2 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 hidden lg:block">Administración</p>
           {sidebarItems.map((item) => (
             <button 
               key={item.id}
               onClick={() => { setActiveTab(item.id); setSearchTerm(''); }}
-              className={`w-full flex items-center justify-between p-4 rounded-2xl font-bold transition-all ${
+              className={`flex items-center justify-between p-3.5 lg:p-4 rounded-2xl font-black transition-all text-xs lg:text-sm whitespace-nowrap shrink-0 lg:w-full ${
                 activeTab === item.id 
                 ? 'bg-orange-600 text-white shadow-lg shadow-orange-100' 
                 : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600'
               }`}
             >
-              <div className="flex items-center gap-3">
-                <item.icon size={20} />
+              <div className="flex items-center gap-2.5 lg:gap-3">
+                <item.icon size={18} />
                 <span>{item.label}</span>
               </div>
-              {activeTab === item.id && <ChevronRight size={16} />}
+              {activeTab === item.id && <ChevronRight size={16} className="hidden lg:block" />}
             </button>
           ))}
         </div>
@@ -498,7 +498,7 @@ const AdminPage = () => {
                                       </div>
                                     </div>
                                     
-                                    <div className="flex gap-1 opacity-0 group-hover/prod:opacity-100 transition-opacity">
+                                    <div className="flex gap-1 md:opacity-0 md:group-hover/prod:opacity-100 opacity-100 transition-opacity">
                                       <button 
                                         onClick={() => openModal(product, 'products')}
                                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
@@ -566,7 +566,7 @@ const AdminPage = () => {
                             </span>
                           </td>
                           <td className="px-8 py-5 text-right">
-                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="flex justify-end gap-2 md:opacity-0 md:group-hover:opacity-100 opacity-100 transition-opacity">
                               <button onClick={() => openModal(item)} className="p-3 text-blue-600 hover:bg-blue-100 rounded-xl transition-colors"><Edit2 size={18} /></button>
                               <button onClick={() => handleDelete(item.id)} className="p-3 text-red-600 hover:bg-red-100 rounded-xl transition-colors"><Trash2 size={18} /></button>
                             </div>
