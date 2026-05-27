@@ -4,7 +4,7 @@ services:
     name: el-mana-backend
     env: node
     plan: free # Puedes usar el plan gratuito o pasarlo a paid si deseas añadir disco persistente
-    buildCommand: cd backend && npm install && npx prisma db push && npx prisma generate
+    buildCommand: cd backend && npm install && npx prisma db push && npx prisma db seed && npx prisma generate
     startCommand: cd backend && npm start
     envVars:
       - key: PORT
