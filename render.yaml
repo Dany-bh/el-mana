@@ -1,0 +1,28 @@
+services:
+  # 1. Backend Service (Express + Socket.io + Prisma + SQLite)
+  - type: web
+    name: el-mana-backend
+    env: node
+    plan: free # Puedes usar el plan gratuito o pasarlo a paid si deseas añadir disco persistente
+    buildCommand: cd backend && npm install && npx prisma db push && npx prisma generate
+    startCommand: cd backend && npm start
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        value: file:./dev.db
+      - key: NODE_ENV
+        value: production
+
+  # 2. Frontend Service (Vite + React Static Site)
+  - type: web
+    name: el-mana-frontend
+    env: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: el-mana-backend
+          property: host
