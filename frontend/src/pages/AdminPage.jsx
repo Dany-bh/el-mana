@@ -220,7 +220,7 @@ const AdminPage = () => {
                 <h2 className="text-3xl font-black text-gray-800 tracking-tighter uppercase italic">Resumen de Caja</h2>
                 <p className="text-gray-500 font-medium text-sm">Resumen consolidado de ventas y productos facturados</p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                 <button 
                   onClick={async () => {
                     if (window.confirm('¿Reiniciar caja del día? Se borrarán los reportes de ventas actuales de este turno.')) {
@@ -233,9 +233,9 @@ const AdminPage = () => {
                       }
                     }
                   }}
-                  className="bg-white text-gray-800 border-2 border-gray-100 px-5 py-3 rounded-2xl flex items-center gap-2 hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all font-black text-xs uppercase tracking-widest active:scale-95 cursor-pointer"
+                  className="bg-white text-gray-800 border-2 border-gray-100 px-3.5 py-2.5 sm:px-5 sm:py-3 rounded-2xl flex items-center justify-center gap-1.5 hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all font-black text-[10px] sm:text-xs uppercase tracking-wider sm:tracking-widest active:scale-95 cursor-pointer flex-1 sm:flex-none whitespace-nowrap"
                 >
-                  <Clock size={16} /> Reiniciar Día
+                  <Clock size={14} /> Reiniciar Día
                 </button>
                 <button 
                   onClick={async () => {
@@ -249,13 +249,13 @@ const AdminPage = () => {
                       }
                     }
                   }}
-                  className="bg-white text-red-600 border-2 border-red-100 px-5 py-3 rounded-2xl flex items-center gap-2 hover:bg-red-600 hover:text-white transition-all font-black text-xs uppercase tracking-widest active:scale-95 cursor-pointer"
+                  className="bg-white text-red-600 border-2 border-red-100 px-3.5 py-2.5 sm:px-5 sm:py-3 rounded-2xl flex items-center justify-center gap-1.5 hover:bg-red-600 hover:text-white transition-all font-black text-[10px] sm:text-xs uppercase tracking-wider sm:tracking-widest active:scale-95 cursor-pointer flex-1 sm:flex-none whitespace-nowrap"
                 >
-                  <Trash2 size={16} /> Borrar Todo
+                  <Trash2 size={14} /> Borrar Todo
                 </button>
                 <button 
                   onClick={fetchData}
-                  className="bg-gray-900 text-white px-5 py-3 rounded-2xl flex items-center gap-2 hover:bg-orange-600 transition-all font-black text-xs uppercase tracking-widest shadow-lg active:scale-95 cursor-pointer"
+                  className="bg-gray-900 text-white px-3.5 py-2.5 sm:px-5 sm:py-3 rounded-2xl flex items-center justify-center gap-1.5 hover:bg-orange-600 transition-all font-black text-[10px] sm:text-xs uppercase tracking-wider sm:tracking-widest shadow-lg active:scale-95 cursor-pointer flex-1 sm:flex-none whitespace-nowrap"
                 >
                   Actualizar
                 </button>
