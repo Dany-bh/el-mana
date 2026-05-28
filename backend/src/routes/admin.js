@@ -250,6 +250,17 @@ router.post('/reset-daily', async (req, res) => {
     ]);
 
     console.log(`[Admin] Successfully deleted ${result[1].count} orders and their items.`);
+
+    // Broadcast the action to all connected screens
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('admin_action_broadcast', {
+        type: 'RESET_DAILY',
+        title: '¡Día Reiniciado!',
+        message: 'El Administrador ha reiniciado el día laboral. La caja de este turno se ha archivado.'
+      });
+    }
+
     res.json({ success: true, message: 'Caja del día reiniciada' });
   } catch (err) {
     console.error('[Admin] FATAL ERROR in reset-daily:', err);
@@ -277,6 +288,17 @@ router.post('/clear-kitchen-history', async (req, res) => {
     ]);
 
     console.log(`[Admin] Successfully cleared ${result[1].count} ready orders.`);
+
+    // Broadcast the action to all connected screens
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('admin_action_broadcast', {
+        type: 'CLEAR_KITCHEN',
+        title: '¡Historial Limpiado!',
+        message: 'El Administrador ha limpiado el historial de comandas despachadas en cocina.'
+      });
+    }
+
     res.json({ success: true, message: 'Historial de cocina limpiado' });
   } catch (err) {
     console.error('[Admin] FATAL ERROR in clear-kitchen-history:', err);
@@ -292,6 +314,17 @@ router.post('/purge-all-history', async (req, res) => {
       prisma.order.deleteMany({})
     ]);
     console.log(`[Admin] Successfully purged ALL history: ${result[1].count} orders deleted.`);
+
+    // Broadcast the action to all connected screens
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('admin_action_broadcast', {
+        type: 'PURGE_ALL',
+        title: '¡SISTEMA PURGADO!',
+        message: '¡ATENCIÓN! El Administrador ha eliminado por completo todo el historial de ventas del sistema.'
+      });
+    }
+
     res.json({ success: true, message: 'Historial total eliminado' });
   } catch (err) {
     console.error('[Admin] FATAL ERROR in purge-all-history:', err);

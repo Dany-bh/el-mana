@@ -8,6 +8,8 @@ import KitchenPage from './pages/KitchenPage';
 import LoginPage from './pages/LoginPage';
 import AdminPage from './pages/AdminPage';
 import { ChevronLeft } from 'lucide-react';
+import { GlobalNotifications } from './components/GlobalNotifications';
+
 
 function App() {
   const { 
@@ -99,6 +101,7 @@ function App() {
         )}
         {user.role === 'ADMIN' && <AdminPage />}
       </div>
+      <GlobalNotifications />
     </div>
   );
 }

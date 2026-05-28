@@ -85,3 +85,23 @@
   from { transform: scale(0.95); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
+
+/* Toast Notification animations */
+.animate-shrink-width {
+  animation: shrink-width-kf linear forwards;
+}
+
+@keyframes shrink-width-kf {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+.slide-in-from-right-10 {
+  animation-name: slide-in-right-10-kf;
+}
+
+@keyframes slide-in-right-10-kf {
+  from { transform: translateX(2.5rem); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+

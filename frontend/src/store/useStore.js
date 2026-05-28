@@ -127,6 +127,31 @@ export const useStore = create((set, get) => ({
       playSynthNotification();
     });
 
+    socket.on('admin_action_broadcast', (data) => {
+      set((state) => ({
+        notifications: [...state.notifications, {
+          id: Date.now() + Math.random(),
+          type: 'ADMIN_BROADCAST',
+          broadcastType: data.type,
+          title: data.title,
+          message: data.message
+        }]
+      }));
+      playSynthNotification();
+
+      if (data.type === 'RESET_DAILY' || data.type === 'PURGE_ALL') {
+        set((state) => ({
+          activeOrders: [],
+          selectedTable: null,
+          tables: state.tables.map(t => ({ ...t, status: 'LIBRE' }))
+        }));
+      } else if (data.type === 'CLEAR_KITCHEN') {
+        set((state) => ({
+          activeOrders: state.activeOrders.filter(o => o.status !== 'LISTO')
+        }));
+      }
+    });
+
     socket.on('order_status_updated', ({ orderId, status, updatedAt }) => {
       set((state) => ({
         activeOrders: state.activeOrders.map(o => {

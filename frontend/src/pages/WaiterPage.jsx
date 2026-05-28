@@ -206,52 +206,6 @@ const WaiterPage = () => {
 
   return (
     <>
-      {/* Notifications Overlay */}
-      {notifications.length > 0 && (
-        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center p-6 bg-black/45 backdrop-blur-sm pointer-events-none">
-          <div className="w-full max-w-md space-y-4 pointer-events-auto">
-            {notifications.map((notif) => (
-              <div 
-                key={notif.id} 
-                className={`p-6 rounded-[2rem] shadow-2xl border-4 animate-in zoom-in-95 slide-in-from-top-4 duration-300 ${
-                  notif.type === 'ORDER_READY' 
-                  ? 'bg-blue-600 border-blue-400 text-white' 
-                  : 'bg-green-600 border-green-400 text-white'
-                }`}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-1 opacity-80">Notificación de Cocina</p>
-                    <h4 className="text-3xl font-black italic tracking-tighter uppercase leading-none mb-2">
-                      {notif.type === 'ORDER_READY' ? '¡Pedido Despachado!' : '¡Plato Listo!'}
-                    </h4>
-                    <p className="text-4xl font-black italic tracking-tighter uppercase mb-2">
-                      Mesa {notif.tableNumber} - Piso {notif.floor || 1}
-                    </p>
-                    {notif.itemName && (
-                      <p className="text-xl font-bold uppercase tracking-tight mb-3">
-                        {notif.itemName}
-                      </p>
-                    )}
-                    <div className="flex items-center gap-2 bg-black/20 w-fit px-3 py-1.5 rounded-full">
-                      <Clock size={16} />
-                      <span className="font-mono font-black text-lg">{notif.timeTaken ? formatTime(notif.timeTaken) : '0:00'}</span>
-                      <span className="text-[9px] font-black uppercase tracking-widest">Preparación</span>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => dismissNotification(notif.id)}
-                    className="bg-white text-black font-black px-8 py-4 rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer uppercase tracking-widest text-sm shrink-0 self-center"
-                  >
-                    OK
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {!selectedTable ? (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           <header className="mb-8">
