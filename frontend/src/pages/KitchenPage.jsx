@@ -169,6 +169,7 @@ const OrderCard = ({ order, isHistory = false }) => {
 const KitchenPage = () => {
   const { activeOrders } = useStore();
   const [viewMode, setViewMode] = useState('QUEUE'); // 'QUEUE' or 'HISTORY'
+  const [confirmAction, setConfirmAction] = useState(null);
 
   const pendingOrders = activeOrders.filter(o => o.status === 'PENDIENTE' && o.items.some(isFoodItem));
   const dispatchedOrders = activeOrders.filter(o => o.status === 'LISTO' && o.items.some(isFoodItem));
@@ -191,17 +192,19 @@ const KitchenPage = () => {
         <div className="flex items-center gap-4 w-full sm:w-auto flex-wrap">
           {viewMode === 'HISTORY' && dispatchedOrders.length > 0 && (
             <button
-              onClick={async () => {
-                if (window.confirm('¿Limpiar el historial de cocina? Se borrarán todos los registros de platos ya despachados.')) {
-                  try {
-                    await api.post('/api/admin/clear-kitchen-history');
-                    // El estado se actualizará automáticamente vía sockets si el servidor emite un cambio, 
-                    // o podemos forzar una recarga si fuera necesario.
-                    window.location.reload(); 
-                  } catch (err) {
-                    alert('Error al limpiar historial');
+              onClick={() => {
+                setConfirmAction({
+                  title: '¿Limpiar Historial?',
+                  message: '¿Estás seguro de limpiar el historial de cocina? Se borrarán permanentemente todos los registros de platos despachados.',
+                  isDangerous: true,
+                  onConfirm: async () => {
+                    try {
+                      await api.post('/api/admin/clear-kitchen-history');
+                    } catch (err) {
+                      alert('Error al limpiar historial');
+                    }
                   }
-                }
+                });
               }}
               className="px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer bg-red-600/10 text-red-500 border border-red-500/20 hover:bg-red-600 hover:text-white"
             >
@@ -250,6 +253,45 @@ const KitchenPage = () => {
           {displayOrders.map(order => (
             <OrderCard key={order.id} order={order} isHistory={viewMode === 'HISTORY'} />
           ))}
+        </div>
+      )}
+
+      {/* Custom Kitchen Action Confirmation Modal */}
+      {confirmAction && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#1a1d23] rounded-[2.5rem] shadow-2xl max-w-sm w-full border-2 border-[#2d323a] p-8 text-center animate-in zoom-in-95 duration-200 relative overflow-hidden">
+            {/* Ambient decoration */}
+            <div className="absolute -top-12 -right-12 w-24 h-24 bg-red-500/5 rounded-full" />
+            
+            <div className="p-4.5 rounded-3xl inline-flex mb-5 border-2 border-red-500/20 bg-red-500/10 text-red-500 shadow-sm animate-bounce">
+              <AlertCircle size={32} />
+            </div>
+            
+            <h3 className="text-2xl font-black text-white tracking-tighter uppercase italic mb-2">
+              {confirmAction.title}
+            </h3>
+            <p className="text-gray-400 text-sm font-semibold mb-6 leading-relaxed">
+              {confirmAction.message}
+            </p>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmAction(null)}
+                className="flex-1 bg-[#22272e] text-gray-400 hover:text-white border border-[#2d323a] font-black py-4 rounded-2xl text-xs hover:bg-[#2d323a] transition-all uppercase tracking-widest cursor-pointer active:scale-95"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={async () => {
+                  await confirmAction.onConfirm();
+                  setConfirmAction(null);
+                }}
+                className="flex-1 bg-gradient-to-r from-red-600 to-red-500 text-white font-black py-4 rounded-2xl text-xs shadow-lg shadow-red-950/40 hover:shadow-red-900 transition-all active:scale-95 uppercase tracking-widest cursor-pointer"
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

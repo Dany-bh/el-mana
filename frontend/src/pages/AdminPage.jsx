@@ -119,33 +119,43 @@ const AdminPage = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('¿Estás seguro de eliminar este elemento?')) {
-      try {
-        await api.delete(`/api/admin/${activeTab}/${id}`);
-        fetchData();
-        if (activeTab === 'categories') {
-          fetchCategories();
+  const handleDelete = (id) => {
+    setConfirmAction({
+      title: '¿Eliminar Registro?',
+      message: '¿Estás seguro de eliminar este elemento? Asegúrate de que no tenga otros elementos asociados (como productos o pedidos).',
+      isDangerous: true,
+      onConfirm: async () => {
+        try {
+          await api.delete(`/api/admin/${activeTab}/${id}`);
+          fetchData();
+          if (activeTab === 'categories') {
+            fetchCategories();
+          }
+        } catch (error) {
+          console.error("Delete error:", error);
+          const msg = error.response?.data?.error || "No se pudo eliminar el elemento. Asegúrate de que no tenga otros elementos asociados (como productos o pedidos).";
+          alert(msg);
         }
-      } catch (error) {
-        console.error("Delete error:", error);
-        const msg = error.response?.data?.error || "No se pudo eliminar el elemento. Asegúrate de que no tenga otros elementos asociados (como productos o pedidos).";
-        alert(msg);
       }
-    }
+    });
   };
 
-  const handleDeleteProduct = async (id) => {
-    if (window.confirm('¿Estás seguro de eliminar este producto?')) {
-      try {
-        await api.delete(`/api/admin/products/${id}`);
-        fetchCategories();
-        fetchData();
-      } catch (error) {
-        console.error("Delete error:", error);
-        alert(error.response?.data?.error || "Error al eliminar producto");
+  const handleDeleteProduct = (id) => {
+    setConfirmAction({
+      title: '¿Eliminar Producto?',
+      message: '¿Estás seguro de eliminar este producto del menú? Se borrará de forma permanente.',
+      isDangerous: true,
+      onConfirm: async () => {
+        try {
+          await api.delete(`/api/admin/products/${id}`);
+          fetchCategories();
+          fetchData();
+        } catch (error) {
+          console.error("Delete error:", error);
+          alert(error.response?.data?.error || "Error al eliminar producto");
+        }
       }
-    }
+    });
   };
 
   const openModal = (item = null, type = activeTab, defaultFields = {}) => {
@@ -364,7 +374,7 @@ const AdminPage = () => {
             </div>
           </div>
         ) : activeTab === 'live' ? (
-          <LiveMonitor />
+          <LiveMonitor setConfirmAction={setConfirmAction} />
         ) : (
           <>
             <div className="p-8 border-b border-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -808,7 +818,7 @@ const AdminPage = () => {
   );
 };
 
-const LiveMonitor = () => {
+const LiveMonitor = ({ setConfirmAction }) => {
   const { tables, activeOrders, checkoutTable } = useStore();
   const [selectedTable, setSelectedTable] = useState(null);
   const [selectedFloor, setSelectedFloor] = useState(1);
@@ -865,14 +875,20 @@ const LiveMonitor = () => {
     }
   };
 
-  const handleCheckout = async () => {
+  const handleCheckout = (onDone) => {
     if (!selectedTable) return;
-    if (window.confirm(`¿Estás seguro de cobrar y liberar la Mesa ${selectedTable.number} en el Piso ${selectedTable.floor}?`)) {
-      await checkoutTable(selectedTable.id, selectedTable.floor);
-      setSelectedTable(null);
-      setDocNumber('');
-      setCustomerName('');
-    }
+    setConfirmAction({
+      title: '¿Cobrar y Liberar Mesa?',
+      message: `¿Estás seguro de registrar el cobro y liberar la Mesa ${selectedTable.number} en el Piso ${selectedTable.floor}? Se archivarán todos sus consumos en caja.`,
+      isDangerous: false,
+      onConfirm: async () => {
+        await checkoutTable(selectedTable.id, selectedTable.floor);
+        setSelectedTable(null);
+        setDocNumber('');
+        setCustomerName('');
+        if (typeof onDone === 'function') onDone();
+      }
+    });
   };
 
   return (
@@ -1247,9 +1263,8 @@ const LiveMonitor = () => {
                 <Printer size={16} /> {printLoading ? 'Imprimiendo...' : 'Imprimir POS'}
               </button>
               <button
-                onClick={async () => {
-                  await handleCheckout();
-                  setIsMobileOpen(false);
+                onClick={() => {
+                  handleCheckout(() => setIsMobileOpen(false));
                 }}
                 className="flex-1 bg-orange-600 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg hover:bg-orange-500 transition-all active:scale-95 text-[10px] tracking-widest uppercase cursor-pointer"
               >
