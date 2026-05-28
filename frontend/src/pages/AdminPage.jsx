@@ -757,6 +757,53 @@ const AdminPage = () => {
           </div>
         </div>
       )}
+
+      {/* Custom Admin Action Confirmation Modal */}
+      {confirmAction && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-sm w-full border border-gray-100 p-8 text-center animate-in zoom-in-95 duration-200 relative overflow-hidden">
+            {/* Ambient decoration */}
+            <div className={`absolute -top-12 -right-12 w-24 h-24 rounded-full ${confirmAction.isDangerous ? 'bg-red-600/5' : 'bg-orange-600/5'}`} />
+            
+            <div className={`p-4.5 rounded-3xl inline-flex mb-5 border shadow-sm animate-bounce ${
+              confirmAction.isDangerous 
+              ? 'bg-red-50 text-red-600 border-red-100' 
+              : 'bg-orange-50 text-orange-600 border-orange-100'
+            }`}>
+              {confirmAction.isDangerous ? <AlertCircle size={32} /> : <Clock size={32} />}
+            </div>
+            
+            <h3 className="text-2xl font-black text-gray-800 tracking-tighter uppercase italic mb-2">
+              {confirmAction.title}
+            </h3>
+            <p className="text-gray-500 text-sm font-semibold mb-6 leading-relaxed">
+              {confirmAction.message}
+            </p>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmAction(null)}
+                className="flex-1 bg-gray-100 text-gray-500 font-black py-4 rounded-2xl text-xs hover:bg-gray-200 transition-all uppercase tracking-widest cursor-pointer active:scale-95"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={async () => {
+                  await confirmAction.onConfirm();
+                  setConfirmAction(null);
+                }}
+                className={`flex-1 text-white font-black py-4 rounded-2xl text-xs shadow-lg transition-all active:scale-95 uppercase tracking-widest cursor-pointer ${
+                  confirmAction.isDangerous 
+                  ? 'bg-gradient-to-r from-red-600 to-red-500 shadow-red-100 hover:shadow-red-200' 
+                  : 'bg-gradient-to-r from-orange-600 to-orange-500 shadow-orange-100 hover:shadow-orange-200'
+                }`}
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -1213,52 +1260,6 @@ const LiveMonitor = () => {
         </div>
       )}
 
-      {/* Custom Admin Action Confirmation Modal */}
-      {confirmAction && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-sm w-full border border-gray-100 p-8 text-center animate-in zoom-in-95 duration-200 relative overflow-hidden">
-            {/* Ambient decoration */}
-            <div className={`absolute -top-12 -right-12 w-24 h-24 rounded-full ${confirmAction.isDangerous ? 'bg-red-600/5' : 'bg-orange-600/5'}`} />
-            
-            <div className={`p-4.5 rounded-3xl inline-flex mb-5 border shadow-sm animate-bounce ${
-              confirmAction.isDangerous 
-              ? 'bg-red-50 text-red-600 border-red-100' 
-              : 'bg-orange-50 text-orange-600 border-orange-100'
-            }`}>
-              {confirmAction.isDangerous ? <AlertCircle size={32} /> : <Clock size={32} />}
-            </div>
-            
-            <h3 className="text-2xl font-black text-gray-800 tracking-tighter uppercase italic mb-2">
-              {confirmAction.title}
-            </h3>
-            <p className="text-gray-500 text-sm font-semibold mb-6 leading-relaxed">
-              {confirmAction.message}
-            </p>
-            
-            <div className="flex gap-3">
-              <button
-                onClick={() => setConfirmAction(null)}
-                className="flex-1 bg-gray-100 text-gray-500 font-black py-4 rounded-2xl text-xs hover:bg-gray-200 transition-all uppercase tracking-widest cursor-pointer active:scale-95"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={async () => {
-                  await confirmAction.onConfirm();
-                  setConfirmAction(null);
-                }}
-                className={`flex-1 text-white font-black py-4 rounded-2xl text-xs shadow-lg transition-all active:scale-95 uppercase tracking-widest cursor-pointer ${
-                  confirmAction.isDangerous 
-                  ? 'bg-gradient-to-r from-red-600 to-red-500 shadow-red-100 hover:shadow-red-200' 
-                  : 'bg-gradient-to-r from-orange-600 to-orange-500 shadow-orange-100 hover:shadow-orange-200'
-                }`}
-              >
-                Confirmar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
