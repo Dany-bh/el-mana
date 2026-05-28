@@ -4,7 +4,8 @@ services:
     name: el-mana-backend
     env: node
     plan: free
-    buildCommand: cd backend && npm install && npx prisma db push && npx prisma db seed && npx prisma generate
+    buildCommand: cd backend && npm install && npx prisma generate
+    releaseCommand: cd backend && npx prisma db push && npx prisma db seed
     startCommand: cd backend && npm start
     envVars:
       - key: PORT
@@ -20,11 +21,15 @@ services:
   - type: web
     name: el-mana-frontend
     env: static
+    plan: free
     buildCommand: cd frontend && npm install && npm run build
     staticPublishPath: frontend/dist
     envVars:
       - key: VITE_API_URL
-        value: https://el-mana-backend.onrender.com
+        fromService:
+          type: web
+          name: el-mana-backend
+          property: host
 
 databases:
   - name: el-mana-db
