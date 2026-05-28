@@ -115,11 +115,13 @@ const WaiterPage = () => {
   }, [tableStatus]);
 
   const addToOrder = (product) => {
-    const existing = currentOrder.find(item => item.id === product.id);
-    if (existing) {
-      updateQuantity(product.id, 1);
-    } else {
-      setCurrentOrder([...currentOrder, { ...product, quantity: 1, notes: '' }]);
+    if (window.confirm(`¿Agregar "${product.name.trim()}" al pedido?`)) {
+      const existing = currentOrder.find(item => item.id === product.id);
+      if (existing) {
+        updateQuantity(product.id, 1);
+      } else {
+        setCurrentOrder([...currentOrder, { ...product, quantity: 1, notes: '' }]);
+      }
     }
   };
 
