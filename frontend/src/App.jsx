@@ -26,7 +26,9 @@ function App() {
     selectedTable, 
     setSelectedTable, 
     viewMode, 
-    setViewMode 
+    setViewMode,
+    orderType,
+    setOrderType
   } = useStore();
 
   useEffect(() => {
@@ -56,15 +58,24 @@ function App() {
           selectedTable ? (
             <div className="flex items-center gap-3">
               <button 
-                onClick={() => setSelectedTable(null)} 
+                onClick={() => {
+                  setSelectedTable(null);
+                  if (orderType === 'LLEVAR') {
+                    setOrderType(null);
+                  }
+                }} 
                 className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200 cursor-pointer"
               >
                 <ChevronLeft size={16} className="text-gray-600" />
               </button>
               <div className="flex flex-col">
-                <h2 className="text-sm font-black text-gray-700 uppercase tracking-widest leading-tight">MESA {selectedTable.number} - PISO {selectedTable.floor}</h2>
+                {selectedTable.number === 0 ? (
+                  <h2 className="text-sm font-black text-orange-600 uppercase tracking-widest leading-tight flex items-center gap-1">📦 PEDIDO PARA LLEVAR</h2>
+                ) : (
+                  <h2 className="text-sm font-black text-gray-700 uppercase tracking-widest leading-tight">MESA {selectedTable.number} - PISO {selectedTable.floor}</h2>
+                )}
                 <p className="text-[10px] text-orange-600 font-black uppercase tracking-wider">
-                  {isTableOccupiedOnSelectedFloor ? 'Mesa Ocupada' : 'Nuevo Pedido'}
+                  {selectedTable.number === 0 ? 'Despacho Rápido' : (isTableOccupiedOnSelectedFloor ? 'Mesa Ocupada' : 'Nuevo Pedido')}
                 </p>
               </div>
             </div>
