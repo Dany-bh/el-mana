@@ -67,6 +67,7 @@ router.get('/orders/active', async (req, res) => {
       createdAt: order.createdAt,
       status: order.status,
       total: order.total,
+      toGo: order.toGo,
       items: order.orderItems.map(oi => ({
         id: oi.id,
         productId: oi.productId,

@@ -72,6 +72,23 @@ const WaiterPage = () => {
   const [floorSelectTable, setFloorSelectTable] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [confirmProduct, setConfirmProduct] = useState(null);
+  const [selectedOption, setSelectedOption] = useState('');
+  const [customProductNotes, setCustomProductNotes] = useState('');
+  const [orderToGo, setOrderToGo] = useState(false);
+
+  const getQuickNoteOptions = (productName) => {
+    const name = productName.toLowerCase();
+    if (name.includes('tallarín verde') || name.includes('tallarin verde')) {
+      return ['Con Churrasco', 'Con Hígado'];
+    }
+    if (name.includes('lomo saltado') || name.includes('lomito') || name.includes('tallarín saltado') || name.includes('tallarin saltado')) {
+      return ['De Carne', 'De Pollo'];
+    }
+    if (name.includes('chicharrón') || name.includes('chicharron') || name.includes('chicharrones')) {
+      return ['De Pescado', 'De Chancho', 'De Pollo'];
+    }
+    return [];
+  };
 
   // Filtrado inteligente de productos
   const getFilteredProducts = () => {
@@ -116,18 +133,35 @@ const WaiterPage = () => {
   }, [tableStatus]);
 
   const addToOrder = (product) => {
+    setSelectedOption('');
+    setCustomProductNotes('');
     setConfirmProduct(product);
   };
 
   const handleConfirmAddProduct = () => {
     if (!confirmProduct) return;
-    const existing = currentOrder.find(item => item.id === confirmProduct.id);
-    if (existing) {
-      updateQuantity(confirmProduct.id, 1);
+    
+    const parts = [];
+    if (selectedOption) parts.push(selectedOption);
+    if (customProductNotes.trim()) parts.push(customProductNotes.trim());
+    const finalNotes = parts.join(' - ');
+
+    const existingWithSameNotes = currentOrder.find(
+      item => item.id === confirmProduct.id && item.notes === finalNotes
+    );
+    
+    if (existingWithSameNotes) {
+      setCurrentOrder(currentOrder.map(item => 
+        (item.id === confirmProduct.id && item.notes === finalNotes) 
+          ? { ...item, quantity: item.quantity + 1 } 
+          : item
+      ));
     } else {
-      setCurrentOrder([...currentOrder, { ...confirmProduct, quantity: 1, notes: '' }]);
+      setCurrentOrder([...currentOrder, { ...confirmProduct, quantity: 1, notes: finalNotes }]);
     }
     setConfirmProduct(null);
+    setSelectedOption('');
+    setCustomProductNotes('');
   };
 
   const updateQuantity = (id, delta) => {
@@ -150,13 +184,15 @@ const WaiterPage = () => {
       waiterName: customWaiterName || user.name,
       items: currentOrder,
       notes: notes,
-      floor: selectedTable.floor
+      floor: selectedTable.floor,
+      toGo: orderToGo
     };
 
     socket.emit('send_new_order', orderData);
     
     setCurrentOrder([]);
     setNotes('');
+    setOrderToGo(false);
   };
 
   const handleCheckout = () => {
@@ -600,6 +636,32 @@ const WaiterPage = () => {
                 />
               </div>
               
+              {/* Selector de Tipo de Servicio (Salón vs Para Llevar) */}
+              <div className="mb-4 bg-gray-100 p-1 rounded-2xl flex gap-1 border border-gray-200/50">
+                <button
+                  type="button"
+                  onClick={() => setOrderToGo(false)}
+                  className={`flex-1 py-3 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                    !orderToGo
+                    ? 'bg-white text-orange-600 shadow-sm border border-gray-150 font-black'
+                    : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  🍽️ Salón
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOrderToGo(true)}
+                  className={`flex-1 py-3 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                    orderToGo
+                    ? 'bg-orange-600 text-white shadow-md shadow-orange-600/10 font-black'
+                    : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  📦 Llevar
+                </button>
+              </div>
+
               <div className="flex justify-between items-center mb-3.5">
                 <span className="text-gray-500 font-black uppercase tracking-widest text-sm">Total a pagar</span>
                 <span className="text-4xl font-black text-gray-900 tracking-tighter">S/.{total.toFixed(2)}</span>
@@ -625,14 +687,49 @@ const WaiterPage = () => {
             {/* Ambient decoration */}
             <div className="absolute -top-12 -right-12 w-24 h-24 bg-orange-600/5 rounded-full" />
             
-            <div className="bg-orange-50 p-4.5 rounded-3xl inline-flex mb-5 text-orange-600 border border-orange-100 shadow-sm animate-bounce">
-              <Plus size={32} strokeWidth={3} />
+            <div className="bg-orange-50 p-4.5 rounded-3xl inline-flex mb-4 text-orange-600 border border-orange-100 shadow-sm">
+              <Plus size={28} strokeWidth={3} />
             </div>
             
-            <h3 className="text-2xl font-black text-gray-800 tracking-tighter uppercase italic mb-2">¿Agregar al Pedido?</h3>
-            <p className="text-gray-500 text-sm font-semibold mb-6">
-              ¿Estás seguro de agregar <span className="text-orange-600 font-black">"{confirmProduct.name.trim()}"</span> a la comanda de la mesa?
+            <h3 className="text-xl font-black text-gray-800 tracking-tighter uppercase italic mb-1">¿Agregar al Pedido?</h3>
+            <p className="text-gray-500 text-xs font-semibold mb-4">
+              ¿Estás seguro de agregar <span className="text-orange-600 font-black">"{confirmProduct.name.trim()}"</span> a la comanda?
             </p>
+
+            {/* Quick Choice Buttons if applicable */}
+            {getQuickNoteOptions(confirmProduct.name).length > 0 && (
+              <div className="mb-4 text-left">
+                <label className="block text-[10px] font-black uppercase text-gray-400 tracking-wider mb-2">Selección rápida:</label>
+                <div className="flex flex-wrap gap-2">
+                  {getQuickNoteOptions(confirmProduct.name).map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => setSelectedOption(selectedOption === opt ? '' : opt)}
+                      className={`px-3 py-2 rounded-xl text-xs font-black transition-all cursor-pointer border-2 ${
+                        selectedOption === opt
+                        ? 'bg-orange-50 border-orange-500 text-orange-600 shadow-sm'
+                        : 'bg-gray-50 border-gray-100 hover:border-gray-200 text-gray-600'
+                      }`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Custom note inputs inside confirmation box */}
+            <div className="mb-6 text-left">
+              <label className="block text-[10px] font-black uppercase text-gray-400 tracking-wider mb-2">Indicaciones extra (opcional):</label>
+              <input
+                type="text"
+                placeholder="Ej. sin ensalada, arroz extra, etc."
+                value={customProductNotes}
+                onChange={(e) => setCustomProductNotes(e.target.value)}
+                className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-xl text-xs focus:border-orange-500 focus:bg-white outline-none transition-all font-semibold text-gray-700"
+              />
+            </div>
             
             <div className="flex gap-3">
               <button

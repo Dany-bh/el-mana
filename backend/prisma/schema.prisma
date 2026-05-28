@@ -49,6 +49,7 @@ model Order {
   floor      Int         @default(1)
   status     String      @default("PENDIENTE")
   total      Float       @default(0)
+  toGo       Boolean     @default(false)
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @default(now()) @updatedAt
   waiter     User        @relation(fields: [waiterId], references: [id], onDelete: Cascade)

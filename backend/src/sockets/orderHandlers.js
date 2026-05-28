@@ -74,6 +74,7 @@ export const setupOrderSockets = (io, socket) => {
             floor: parseInt(orderData.floor) || 1,
             status: initialOrderStatus,
             total: orderData.items.reduce((acc, item) => acc + (item.price * item.quantity), 0),
+            toGo: orderData.toGo || false,
             orderItems: {
               create: orderData.items.map(item => {
                 const isInstant = isInstantItem(item.id, item.name);
@@ -107,14 +108,15 @@ export const setupOrderSockets = (io, socket) => {
         io.emit('menu_updated', updatedMenu);
       }
 
-      // Actualizar estado de la mesa a OCUPADA
-      await prisma.table.update({
-        where: { id: orderData.tableId },
-        data: { status: 'OCUPADA' }
-      });
-
-      // Notificar cambio de estado de mesa
-      io.emit('table_status_updated', { tableId: orderData.tableId, status: 'OCUPADA' });
+      // Actualizar estado de la mesa a OCUPADA (solo si no es para llevar)
+      if (!orderData.toGo) {
+        await prisma.table.update({
+          where: { id: orderData.tableId },
+          data: { status: 'OCUPADA' }
+        });
+        // Notificar cambio de estado de mesa
+        io.emit('table_status_updated', { tableId: orderData.tableId, status: 'OCUPADA' });
+      }
 
       // 2. Formatear para el frontend (manteniendo compatibilidad con lo que ya tiene)
       const orderToProcess = {
@@ -129,6 +131,7 @@ export const setupOrderSockets = (io, socket) => {
         status: savedOrder.status,
         total: savedOrder.total,
         notes: orderData.notes,
+        toGo: savedOrder.toGo,
         items: savedOrder.orderItems.map(oi => ({
           id: oi.id,
           productId: oi.productId,

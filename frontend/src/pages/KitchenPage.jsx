@@ -56,9 +56,13 @@ const OrderCard = ({ order, isHistory = false }) => {
       {/* Ticket Header */}
       <div className="p-6 border-b-2 border-[#2d323a] bg-[#22272e] flex justify-between items-center">
         <div>
-          <h3 className="text-4xl font-black text-white italic tracking-tighter uppercase leading-none">MESA {order.tableNumber}</h3>
+          {order.toGo ? (
+            <h3 className="text-3xl font-black text-orange-500 italic tracking-tighter uppercase leading-none flex items-center gap-1.5">📦 LLEVAR</h3>
+          ) : (
+            <h3 className="text-4xl font-black text-white italic tracking-tighter uppercase leading-none">MESA {order.tableNumber}</h3>
+          )}
           <span className="inline-block bg-[#2d323a] text-orange-500 font-extrabold text-[10px] uppercase tracking-wider px-2 py-0.5 rounded mt-2.5">
-            PISO {order.floor || 1}
+            {order.toGo ? 'PARA LLEVAR' : `PISO ${order.floor || 1}`}
           </span>
           <p className="text-xs text-gray-400 uppercase font-black tracking-[0.25em] mt-2">{order.waiterName || "MOZO"}</p>
         </div>
@@ -167,18 +171,148 @@ const OrderCard = ({ order, isHistory = false }) => {
 };
 
 const KitchenPage = () => {
-  const { activeOrders } = useStore();
+  const { activeOrders, markOrderReady, markItemReady } = useStore();
   const [viewMode, setViewMode] = useState('QUEUE'); // 'QUEUE' or 'HISTORY'
   const [confirmAction, setConfirmAction] = useState(null);
+  const [isListening, setIsListening] = useState(false);
+  const [lastSpoken, setLastSpoken] = useState('');
 
   const pendingOrders = activeOrders.filter(o => o.status === 'PENDIENTE' && o.items.some(isFoodItem));
   const dispatchedOrders = activeOrders.filter(o => o.status === 'LISTO' && o.items.some(isFoodItem));
 
   const displayOrders = viewMode === 'QUEUE' ? pendingOrders : dispatchedOrders;
 
+  // Web Speech API - Voice Control Setup
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!isListening || !SpeechRecognition) return;
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.lang = 'es-PE';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onresult = (event) => {
+      const result = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
+      console.log('[Speech Heard]:', result);
+      setLastSpoken(result);
+
+      // Confirm out loud back to chef
+      const speak = (phrase) => {
+        if ('speechSynthesis' in window) {
+          const utterance = new SpeechSynthesisUtterance(phrase);
+          utterance.lang = 'es-PE';
+          window.speechSynthesis.speak(utterance);
+        }
+      };
+
+      // 1. Table Dispatch: "mesa [X] listo" or "mesa [X] despachado"
+      if (result.includes('mesa') && (result.includes('listo') || result.includes('despachado') || result.includes('despacha'))) {
+        const numbersMap = {
+          'uno': 1, '1': 1,
+          'dos': 2, '2': 2,
+          'tres': 3, '3': 3,
+          'cuatro': 4, '4': 4,
+          'cinco': 5, '5': 5,
+          'seis': 6, '6': 6,
+          'siete': 7, '7': 7,
+          'ocho': 8, '8': 8,
+          'nueve': 9, '9': 9,
+          'diez': 10, '10': 10
+        };
+
+        let foundNum = null;
+        Object.keys(numbersMap).forEach(key => {
+          if (result.includes(`mesa ${key}`)) {
+            foundNum = numbersMap[key];
+          }
+        });
+
+        if (foundNum !== null) {
+          const salonPending = pendingOrders.find(o => o.tableNumber === foundNum && !o.toGo);
+          if (salonPending) {
+            markOrderReady(salonPending.id);
+            speak(`Mesa ${foundNum} despachada`);
+            return;
+          } else {
+            speak(`No hay pedidos de mesa ${foundNum}`);
+          }
+        }
+      }
+
+      // 2. Takeaway Dispatch: "llevar listo" or "para llevar listo" or "llevar despachado"
+      if (result.includes('llevar') && (result.includes('listo') || result.includes('despachado') || result.includes('despacha'))) {
+        const toGoPending = pendingOrders.find(o => o.toGo);
+        if (toGoPending) {
+          markOrderReady(toGoPending.id);
+          speak('Pedido para llevar despachado');
+          return;
+        } else {
+          speak('No hay pedidos para llevar pendientes');
+        }
+      }
+
+      // 3. Single Item: "[Nombre] listo"
+      if (result.endsWith('listo') || result.includes('listo') || result.includes('ya está') || result.includes('ya esta')) {
+        let spokenFood = result
+          .replace('listo', '')
+          .replace('ya está', '')
+          .replace('ya esta', '')
+          .trim();
+
+        if (spokenFood.length > 2) {
+          let matchedItem = null;
+          let matchedOrder = null;
+
+          for (const order of pendingOrders) {
+            const pendingFoodItems = order.items.filter(isFoodItem).filter(i => i.status === 'PENDIENTE');
+            for (const item of pendingFoodItems) {
+              const nameLower = item.name.toLowerCase();
+              if (nameLower.includes(spokenFood) || spokenFood.includes(nameLower)) {
+                matchedItem = item;
+                matchedOrder = order;
+                break;
+              }
+            }
+            if (matchedItem) break;
+          }
+
+          if (matchedItem && matchedOrder) {
+            markItemReady(matchedOrder.id, matchedItem.id);
+            speak(`${matchedItem.name} listo`);
+            return;
+          } else {
+            speak(`No encontré el plato ${spokenFood}`);
+          }
+        }
+      }
+    };
+
+    recognition.onerror = (event) => {
+      console.log('Voice Error:', event.error);
+    };
+
+    recognition.onend = () => {
+      if (isListening) {
+        try { recognition.start(); } catch (e) {}
+      }
+    };
+
+    try {
+      recognition.start();
+    } catch (e) {
+      console.log('Recognition start error:', e);
+    }
+
+    return () => {
+      recognition.abort();
+    };
+  }, [isListening, pendingOrders]);
+
   return (
     <div className="min-h-[calc(100vh-140px)] animate-in fade-in duration-700">
-      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-6">
+      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-6">
         <div>
           <h2 className="text-3xl font-black text-gray-800 tracking-tighter uppercase italic">
             {viewMode === 'QUEUE' ? 'Cola de Producción' : 'Historial de Despachados'}
@@ -186,10 +320,34 @@ const KitchenPage = () => {
           <p className="text-gray-500 font-medium">
             {viewMode === 'QUEUE' ? 'Gestiona y despacha los pedidos activos' : 'Revisa y recupera comandas despachadas en la sesión'}
           </p>
+          {isListening && (
+            <div className="mt-2 inline-flex items-center gap-2 bg-green-500/10 text-green-500 text-xs px-3 py-1.5 rounded-full border border-green-500/20 font-black animate-pulse">
+              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+              🎙️ Escuchando comandos de voz... {lastSpoken && `(Oyó: "${lastSpoken}")`}
+            </div>
+          )}
         </div>
         
         {/* Selector de Vistas y Contadores */}
         <div className="flex items-center gap-4 w-full sm:w-auto flex-wrap">
+          {/* Botón Control por Voz */}
+          {('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) && (
+            <button
+              onClick={() => {
+                setIsListening(!isListening);
+                setLastSpoken('');
+              }}
+              className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer border flex items-center gap-2 ${
+                isListening
+                ? 'bg-green-600 text-white border-green-700 shadow-md shadow-green-600/25'
+                : 'bg-[#1a1d23] text-gray-400 border-[#2d323a] hover:text-gray-200'
+              }`}
+            >
+              <span>🎙️</span>
+              {isListening ? 'Voz Activa' : 'Activar Voz'}
+            </button>
+          )}
+
           {viewMode === 'HISTORY' && dispatchedOrders.length > 0 && (
             <button
               onClick={() => {
@@ -248,10 +406,51 @@ const KitchenPage = () => {
             {viewMode === 'QUEUE' ? 'Esperando nuevos pedidos...' : 'No hay pedidos despachados recientemente'}
           </p>
         </div>
+      ) : viewMode === 'QUEUE' ? (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+          {/* Columna Salón (Mesas) */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-3 border-b border-[#2d323a] pb-3 bg-[#111317]/20 p-4 rounded-2xl">
+              <span className="text-2xl">🍽️</span>
+              <h3 className="text-lg font-black text-white uppercase italic tracking-wider">Consumo en Salón ({pendingOrders.filter(o => !o.toGo).length})</h3>
+            </div>
+            {pendingOrders.filter(o => !o.toGo).length === 0 ? (
+              <div className="bg-[#1a1d23]/40 border-2 border-dashed border-[#2d323a] p-12 rounded-[2rem] text-center text-gray-500 font-bold italic">
+                No hay pedidos de salón pendientes
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
+                {pendingOrders.filter(o => !o.toGo).map(order => (
+                  <OrderCard key={order.id} order={order} isHistory={false} />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Columna Para Llevar (Llevar) */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-3 border-b border-[#2d323a] pb-3 bg-[#111317]/20 p-4 rounded-2xl">
+              <span className="text-2xl">📦</span>
+              <h3 className="text-lg font-black text-orange-500 uppercase italic tracking-wider">Pedidos Para Llevar ({pendingOrders.filter(o => o.toGo).length})</h3>
+            </div>
+            {pendingOrders.filter(o => o.toGo).length === 0 ? (
+              <div className="bg-[#1a1d23]/40 border-2 border-dashed border-[#2d323a] p-12 rounded-[2rem] text-center text-gray-500 font-bold italic">
+                No hay pedidos para llevar pendientes
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
+                {pendingOrders.filter(o => o.toGo).map(order => (
+                  <OrderCard key={order.id} order={order} isHistory={false} />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       ) : (
+        /* Historial */
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-8">
           {displayOrders.map(order => (
-            <OrderCard key={order.id} order={order} isHistory={viewMode === 'HISTORY'} />
+            <OrderCard key={order.id} order={order} isHistory={true} />
           ))}
         </div>
       )}
