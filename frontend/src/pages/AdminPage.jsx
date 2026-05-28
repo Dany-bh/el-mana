@@ -64,6 +64,7 @@ const AdminPage = () => {
   const [formData, setFormData] = useState({});
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -222,33 +223,37 @@ const AdminPage = () => {
               </div>
               <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                 <button 
-                  onClick={async () => {
-                    if (window.confirm('¿Reiniciar caja del día? Se borrarán los reportes de ventas actuales de este turno.')) {
+                  onClick={() => setConfirmAction({
+                    title: '¿Reiniciar caja del día?',
+                    message: 'Se archivará y limpiará la caja actual de este turno. Los productos y las mesas no se verán afectados.',
+                    isDangerous: false,
+                    onConfirm: async () => {
                       try {
                         await api.post(`/api/admin/reset-daily`);
                         await fetchData();
-                        alert('Caja del día reiniciada con éxito');
                       } catch (err) {
                         alert('Error al reiniciar caja');
                       }
                     }
-                  }}
+                  })}
                   className="bg-white text-gray-800 border-2 border-gray-100 px-3.5 py-2.5 sm:px-5 sm:py-3 rounded-2xl flex items-center justify-center gap-1.5 hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all font-black text-[10px] sm:text-xs uppercase tracking-wider sm:tracking-widest active:scale-95 cursor-pointer flex-1 sm:flex-none whitespace-nowrap"
                 >
                   <Clock size={14} /> Reiniciar Día
                 </button>
                 <button 
-                  onClick={async () => {
-                    if (window.confirm('¿ELIMINAR TODO EL HISTORIAL? Esta acción borrará permanentemente todos los registros de ventas pasadas.')) {
+                  onClick={() => setConfirmAction({
+                    title: '¿ELIMINAR TODO EL HISTORIAL?',
+                    message: 'Esta acción borrará permanentemente todos los reportes y registros de ventas pasadas de la base de datos. No se puede deshacer.',
+                    isDangerous: true,
+                    onConfirm: async () => {
                       try {
                         await api.post(`/api/admin/purge-all-history`);
                         await fetchData();
-                        alert('Historial total eliminado con éxito');
                       } catch (err) {
                         alert('Error al eliminar historial');
                       }
                     }
-                  }}
+                  })}
                   className="bg-white text-red-600 border-2 border-red-100 px-3.5 py-2.5 sm:px-5 sm:py-3 rounded-2xl flex items-center justify-center gap-1.5 hover:bg-red-600 hover:text-white transition-all font-black text-[10px] sm:text-xs uppercase tracking-wider sm:tracking-widest active:scale-95 cursor-pointer flex-1 sm:flex-none whitespace-nowrap"
                 >
                   <Trash2 size={14} /> Borrar Todo
@@ -1202,6 +1207,53 @@ const LiveMonitor = () => {
                 className="flex-1 bg-orange-600 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg hover:bg-orange-500 transition-all active:scale-95 text-[10px] tracking-widest uppercase cursor-pointer"
               >
                 <CheckCircle size={16} /> Cobrar y Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Admin Action Confirmation Modal */}
+      {confirmAction && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-sm w-full border border-gray-100 p-8 text-center animate-in zoom-in-95 duration-200 relative overflow-hidden">
+            {/* Ambient decoration */}
+            <div className={`absolute -top-12 -right-12 w-24 h-24 rounded-full ${confirmAction.isDangerous ? 'bg-red-600/5' : 'bg-orange-600/5'}`} />
+            
+            <div className={`p-4.5 rounded-3xl inline-flex mb-5 border shadow-sm animate-bounce ${
+              confirmAction.isDangerous 
+              ? 'bg-red-50 text-red-600 border-red-100' 
+              : 'bg-orange-50 text-orange-600 border-orange-100'
+            }`}>
+              {confirmAction.isDangerous ? <AlertCircle size={32} /> : <Clock size={32} />}
+            </div>
+            
+            <h3 className="text-2xl font-black text-gray-800 tracking-tighter uppercase italic mb-2">
+              {confirmAction.title}
+            </h3>
+            <p className="text-gray-500 text-sm font-semibold mb-6 leading-relaxed">
+              {confirmAction.message}
+            </p>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmAction(null)}
+                className="flex-1 bg-gray-100 text-gray-500 font-black py-4 rounded-2xl text-xs hover:bg-gray-200 transition-all uppercase tracking-widest cursor-pointer active:scale-95"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={async () => {
+                  await confirmAction.onConfirm();
+                  setConfirmAction(null);
+                }}
+                className={`flex-1 text-white font-black py-4 rounded-2xl text-xs shadow-lg transition-all active:scale-95 uppercase tracking-widest cursor-pointer ${
+                  confirmAction.isDangerous 
+                  ? 'bg-gradient-to-r from-red-600 to-red-500 shadow-red-100 hover:shadow-red-200' 
+                  : 'bg-gradient-to-r from-orange-600 to-orange-500 shadow-orange-100 hover:shadow-orange-200'
+                }`}
+              >
+                Confirmar
               </button>
             </div>
           </div>

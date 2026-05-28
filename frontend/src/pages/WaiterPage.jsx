@@ -71,6 +71,7 @@ const WaiterPage = () => {
   const [activeCategoryId, setActiveCategoryId] = useState(null);
   const [floorSelectTable, setFloorSelectTable] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [confirmProduct, setConfirmProduct] = useState(null);
 
   // Filtrado inteligente de productos
   const getFilteredProducts = () => {
@@ -115,14 +116,18 @@ const WaiterPage = () => {
   }, [tableStatus]);
 
   const addToOrder = (product) => {
-    if (window.confirm(`¿Agregar "${product.name.trim()}" al pedido?`)) {
-      const existing = currentOrder.find(item => item.id === product.id);
-      if (existing) {
-        updateQuantity(product.id, 1);
-      } else {
-        setCurrentOrder([...currentOrder, { ...product, quantity: 1, notes: '' }]);
-      }
+    setConfirmProduct(product);
+  };
+
+  const handleConfirmAddProduct = () => {
+    if (!confirmProduct) return;
+    const existing = currentOrder.find(item => item.id === confirmProduct.id);
+    if (existing) {
+      updateQuantity(confirmProduct.id, 1);
+    } else {
+      setCurrentOrder([...currentOrder, { ...confirmProduct, quantity: 1, notes: '' }]);
     }
+    setConfirmProduct(null);
   };
 
   const updateQuantity = (id, delta) => {
@@ -653,6 +658,40 @@ const WaiterPage = () => {
               >
                 <Send size={18} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" /> 
                 <span className="uppercase tracking-widest text-sm">Enviar Pedido</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Product Confirmation Modal */}
+      {confirmProduct && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-sm w-full border border-gray-100 p-8 text-center animate-in zoom-in-95 duration-200 relative overflow-hidden">
+            {/* Ambient decoration */}
+            <div className="absolute -top-12 -right-12 w-24 h-24 bg-orange-600/5 rounded-full" />
+            
+            <div className="bg-orange-50 p-4.5 rounded-3xl inline-flex mb-5 text-orange-600 border border-orange-100 shadow-sm animate-bounce">
+              <Plus size={32} strokeWidth={3} />
+            </div>
+            
+            <h3 className="text-2xl font-black text-gray-800 tracking-tighter uppercase italic mb-2">¿Agregar al Pedido?</h3>
+            <p className="text-gray-500 text-sm font-semibold mb-6">
+              ¿Estás seguro de agregar <span className="text-orange-600 font-black">"{confirmProduct.name.trim()}"</span> a la comanda de la mesa?
+            </p>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmProduct(null)}
+                className="flex-1 bg-gray-100 text-gray-500 font-black py-4 rounded-2xl text-xs hover:bg-gray-200 transition-all uppercase tracking-widest cursor-pointer active:scale-95"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmAddProduct}
+                className="flex-1 bg-gradient-to-r from-orange-600 to-orange-500 text-white font-black py-4 rounded-2xl text-xs shadow-lg shadow-orange-150 hover:shadow-orange-200 transition-all active:scale-95 uppercase tracking-widest cursor-pointer"
+              >
+                Agregar
               </button>
             </div>
           </div>
