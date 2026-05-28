@@ -63,7 +63,9 @@ const WaiterPage = () => {
     viewMode,
     setViewMode,
     customWaiterName,
-    setCustomWaiterName
+    setCustomWaiterName,
+    orderType,
+    setOrderType
   } = useStore();
 
   const [currentOrder, setCurrentOrder] = useState([]);
@@ -78,6 +80,10 @@ const WaiterPage = () => {
 
   const getQuickNoteOptions = (productName) => {
     const name = productName.toLowerCase();
+    // If the product name already specifies the type of meat/fish, do not offer choices!
+    if (name.includes('pollo') || name.includes('carne') || name.includes('churrasco') || name.includes('higado') || name.includes('pescado') || name.includes('chancho') || name.includes('milanesa')) {
+      return [];
+    }
     if (name.includes('tallarín verde') || name.includes('tallarin verde')) {
       return ['Con Churrasco', 'Con Hígado'];
     }
@@ -238,16 +244,70 @@ const WaiterPage = () => {
     );
   }
 
+  // Pantalla de selección inicial: Salón vs Para Llevar
+  if (user.role === 'MOZO' && !orderType) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] animate-in fade-in duration-500">
+        <header className="text-center mb-10">
+          <h2 className="text-4xl font-black text-gray-800 tracking-tighter uppercase italic mb-2 leading-none">Nuevo Pedido</h2>
+          <p className="text-gray-500 font-medium">¿Cómo desea registrar este servicio?</p>
+        </header>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-3xl px-4">
+          {/* Opción Local */}
+          <button
+            onClick={() => {
+              setOrderType('SALON');
+              setOrderToGo(false);
+            }}
+            className="bg-white group p-12 rounded-[3rem] shadow-sm border-2 border-gray-100 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:shadow-2xl hover:border-orange-500 active:scale-95 duration-300"
+          >
+            <div className="bg-orange-50 p-7 rounded-[2rem] text-orange-600 mb-6 group-hover:bg-orange-600 group-hover:text-white transition-all duration-300">
+              <Utensils size={48} />
+            </div>
+            <span className="font-black text-3xl uppercase italic text-gray-800">🍽️ En Local</span>
+            <span className="text-xs text-gray-400 font-semibold mt-3 leading-relaxed">Registrar comandas para consumo en mesas físicas del local</span>
+          </button>
+
+          {/* Opción Llevar */}
+          <button
+            onClick={() => {
+              setOrderType('LLEVAR');
+              setOrderToGo(true);
+              // Buscar o simular mesa virtual para llevar
+              const takeawayTable = tables.find(t => t.number === 0) || { id: 'takeaway-table-id', number: 0, floor: 1 };
+              setSelectedTable({ ...takeawayTable, number: 0, floor: 1 });
+              setViewMode('MENU');
+            }}
+            className="bg-white group p-12 rounded-[3rem] shadow-sm border-2 border-gray-100 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:shadow-2xl hover:border-orange-500 active:scale-95 duration-300"
+          >
+            <div className="bg-orange-50 p-7 rounded-[2rem] text-orange-600 mb-6 group-hover:bg-orange-600 group-hover:text-white transition-all duration-300">
+              <ShoppingCart size={48} />
+            </div>
+            <span className="font-black text-3xl uppercase italic text-gray-800">📦 Para Llevar</span>
+            <span className="text-xs text-gray-400 font-semibold mt-3 leading-relaxed">Pedido de despacho rápido sin ocupar mesa física</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const activeCategory = menu.find(c => c.id === activeCategoryId);
 
   return (
     <>
       {!selectedTable ? (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <header className="mb-8">
+          <header className="mb-8 flex items-center gap-4">
+            <button
+              onClick={() => setOrderType(null)}
+              className="bg-white border border-gray-150 p-3 rounded-2xl hover:shadow-md cursor-pointer transition-all active:scale-95 text-gray-600 flex items-center justify-center shrink-0"
+            >
+              <ChevronLeft size={20} strokeWidth={3} />
+            </button>
             <div>
-              <h2 className="text-3xl font-black text-gray-800 tracking-tighter uppercase italic">Seleccionar Mesa</h2>
-              <p className="text-gray-500 font-medium">Elija una mesa física disponible en cualquiera de los 3 pisos</p>
+              <h2 className="text-3xl font-black text-gray-800 tracking-tighter uppercase italic leading-none mb-1">Seleccionar Mesa</h2>
+              <p className="text-gray-500 font-medium text-sm leading-none">Elija una mesa física disponible en cualquiera de los 3 pisos</p>
             </div>
           </header>
 
@@ -637,30 +697,36 @@ const WaiterPage = () => {
               </div>
               
               {/* Selector de Tipo de Servicio (Salón vs Para Llevar) */}
-              <div className="mb-4 bg-gray-100 p-1 rounded-2xl flex gap-1 border border-gray-200/50">
-                <button
-                  type="button"
-                  onClick={() => setOrderToGo(false)}
-                  className={`flex-1 py-3 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center gap-2 ${
-                    !orderToGo
-                    ? 'bg-white text-orange-600 shadow-sm border border-gray-150 font-black'
-                    : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  🍽️ Salón
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setOrderToGo(true)}
-                  className={`flex-1 py-3 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center gap-2 ${
-                    orderToGo
-                    ? 'bg-orange-600 text-white shadow-md shadow-orange-600/10 font-black'
-                    : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  📦 Llevar
-                </button>
-              </div>
+              {orderType === 'LLEVAR' ? (
+                <div className="mb-4 bg-orange-50/50 p-4 border-2 border-orange-200 text-orange-600 rounded-2xl flex items-center justify-center gap-2 font-black uppercase text-[10px] tracking-widest">
+                  📦 PEDIDO PARA LLEVAR (DESPACHO)
+                </div>
+              ) : (
+                <div className="mb-4 bg-gray-100 p-1 rounded-2xl flex gap-1 border border-gray-200/50">
+                  <button
+                    type="button"
+                    onClick={() => setOrderToGo(false)}
+                    className={`flex-1 py-3 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                      !orderToGo
+                      ? 'bg-white text-orange-600 shadow-sm border border-gray-150 font-black'
+                      : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    🍽️ Local
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOrderToGo(true)}
+                    className={`flex-1 py-3 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                      orderToGo
+                      ? 'bg-orange-600 text-white shadow-md shadow-orange-600/10 font-black'
+                      : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    📦 Llevar
+                  </button>
+                </div>
+              )}
 
               <div className="flex justify-between items-center mb-3.5">
                 <span className="text-gray-500 font-black uppercase tracking-widest text-sm">Total a pagar</span>
@@ -721,10 +787,10 @@ const WaiterPage = () => {
 
             {/* Custom note inputs inside confirmation box */}
             <div className="mb-6 text-left">
-              <label className="block text-[10px] font-black uppercase text-gray-400 tracking-wider mb-2">Indicaciones extra (opcional):</label>
+              <label className="block text-[10px] font-black uppercase text-gray-400 tracking-wider mb-2">Acompañamiento o indicación (ej. con bistec, sin cebolla):</label>
               <input
                 type="text"
-                placeholder="Ej. sin ensalada, arroz extra, etc."
+                placeholder="Escribe la carne u otra indicación aquí..."
                 value={customProductNotes}
                 onChange={(e) => setCustomProductNotes(e.target.value)}
                 className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-xl text-xs focus:border-orange-500 focus:bg-white outline-none transition-all font-semibold text-gray-700"

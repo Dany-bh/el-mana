@@ -3,6 +3,27 @@ import { useStore } from '../store/useStore';
 import api from '../services/api';
 import { Clock, CheckCircle, Flame, AlertCircle, RotateCcw } from 'lucide-react';
 
+const cleanText = (str) => {
+  return str
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // remove accents
+    .replace(/[^a-z0-9\s]/g, "") // remove special characters
+    .trim();
+};
+
+const matchFoodNames = (nameA, nameB) => {
+  const cleanA = cleanText(nameA);
+  const cleanB = cleanText(nameB);
+  
+  if (cleanA.includes(cleanB) || cleanB.includes(cleanA)) return true;
+  
+  const wordsA = cleanA.split(/\s+/).filter(w => w.length > 2);
+  const wordsB = cleanB.split(/\s+/).filter(w => w.length > 2);
+  
+  return wordsA.some(wA => wordsB.some(wB => wA.startsWith(wB) || wB.startsWith(wA) || wA.includes(wB) || wB.includes(wA)));
+};
+
 const isFoodItem = (item) => {
   const cat = (item.categoryName || "").toLowerCase();
   const name = (item.name || "").toLowerCase();
@@ -268,8 +289,7 @@ const KitchenPage = () => {
           for (const order of pendingOrders) {
             const pendingFoodItems = order.items.filter(isFoodItem).filter(i => i.status === 'PENDIENTE');
             for (const item of pendingFoodItems) {
-              const nameLower = item.name.toLowerCase();
-              if (nameLower.includes(spokenFood) || spokenFood.includes(nameLower)) {
+              if (matchFoodNames(item.name, spokenFood)) {
                 matchedItem = item;
                 matchedOrder = order;
                 break;
@@ -408,15 +428,15 @@ const KitchenPage = () => {
         </div>
       ) : viewMode === 'QUEUE' ? (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-          {/* Columna Salón (Mesas) */}
+          {/* Columna Local (Mesas) */}
           <div className="space-y-6">
             <div className="flex items-center gap-3 border-b border-[#2d323a] pb-3 bg-[#111317]/20 p-4 rounded-2xl">
               <span className="text-2xl">🍽️</span>
-              <h3 className="text-lg font-black text-white uppercase italic tracking-wider">Consumo en Salón ({pendingOrders.filter(o => !o.toGo).length})</h3>
+              <h3 className="text-lg font-black text-white uppercase italic tracking-wider">Consumo en Local ({pendingOrders.filter(o => !o.toGo).length})</h3>
             </div>
             {pendingOrders.filter(o => !o.toGo).length === 0 ? (
               <div className="bg-[#1a1d23]/40 border-2 border-dashed border-[#2d323a] p-12 rounded-[2rem] text-center text-gray-500 font-bold italic">
-                No hay pedidos de salón pendientes
+                No hay pedidos de local pendientes
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
