@@ -5,24 +5,31 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Seeding database...');
 
-  // Create Users
+  // Create Admin (always needed, safety net)
   const admin = await prisma.user.upsert({
     where: { pin: '1234' },
     update: {},
     create: { name: 'Admin', pin: '1234', role: 'ADMIN' },
   });
 
-  const waiter1 = await prisma.user.upsert({
-    where: { pin: '0001' },
-    update: {},
-    create: { name: 'Juan Mozo', pin: '0001', role: 'MOZO' },
-  });
+  // Create default Mozo and Cocina only if this is a fresh database (only Admin exists)
+  const userCount = await prisma.user.count();
+  if (userCount <= 1) {
+    await prisma.user.upsert({
+      where: { pin: '0001' },
+      update: {},
+      create: { name: 'Juan Mozo', pin: '0001', role: 'MOZO' },
+    });
 
-  const kitchen = await prisma.user.upsert({
-    where: { pin: '8888' },
-    update: {},
-    create: { name: 'Chef Mario', pin: '8888', role: 'COCINA' },
-  });
+    await prisma.user.upsert({
+      where: { pin: '8888' },
+      update: {},
+      create: { name: 'Chef Mario', pin: '8888', role: 'COCINA' },
+    });
+    console.log('Fresh database: seeded default waiter and kitchen accounts.');
+  } else {
+    console.log('Skipping default accounts seeding to protect user deletions.');
+  }
 
   // Create Tables
   for (let i = 1; i <= 10; i++) {
