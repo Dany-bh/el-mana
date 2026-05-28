@@ -782,7 +782,7 @@ const LiveMonitor = () => {
   const consolidatedItems = [];
   
   tableOrders.forEach(order => {
-    order.items.forEach(item => {
+    (order.items || []).forEach(item => {
       const existing = consolidatedItems.find(i => i.productId === item.productId && i.notes === item.notes);
       if (existing) {
         existing.quantity += item.quantity;
