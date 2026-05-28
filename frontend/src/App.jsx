@@ -93,13 +93,21 @@ function App() {
         }
       />
       <div className="p-4 sm:p-8 transition-all duration-500">
-        {user.role === 'COCINA' && <KitchenPage />}
+        {user.role === 'COCINA' && (
+          <ErrorBoundary>
+            <KitchenPage />
+          </ErrorBoundary>
+        )}
         {user.role === 'MOZO' && (
           <ErrorBoundary>
             <WaiterPage />
           </ErrorBoundary>
         )}
-        {user.role === 'ADMIN' && <AdminPage />}
+        {user.role === 'ADMIN' && (
+          <ErrorBoundary>
+            <AdminPage />
+          </ErrorBoundary>
+        )}
       </div>
       <GlobalNotifications />
     </div>
