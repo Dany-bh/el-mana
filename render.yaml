@@ -1,16 +1,18 @@
 services:
-  # 1. Backend Service (Express + Socket.io + Prisma + SQLite)
+  # 1. Backend Service (Express + Socket.io + Prisma + PostgreSQL)
   - type: web
     name: el-mana-backend
     env: node
-    plan: free # Puedes usar el plan gratuito o pasarlo a paid si deseas añadir disco persistente
+    plan: free
     buildCommand: cd backend && npm install && npx prisma db push && npx prisma db seed && npx prisma generate
     startCommand: cd backend && npm start
     envVars:
       - key: PORT
         value: 10000
       - key: DATABASE_URL
-        value: file:./dev.db
+        fromDatabase:
+          name: el-mana-db
+          property: connectionString
       - key: NODE_ENV
         value: production
 
@@ -23,3 +25,7 @@ services:
     envVars:
       - key: VITE_API_URL
         value: https://el-mana-backend.onrender.com
+
+databases:
+  - name: el-mana-db
+    plan: free
