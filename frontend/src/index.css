@@ -105,3 +105,119 @@
   to { transform: translateX(0); opacity: 1; }
 }
 
+/* --- Adaptive Dark Mode (Modo Descanso) --- */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+  
+  body, .bg-gray-50, #center {
+    background-color: #0b0f19 !important; /* Deep dark background */
+    color: #f1f5f9 !important;
+  }
+
+  .bg-white, .bg-white\/95 {
+    background-color: #141c2c !important; /* Premium dark slate card */
+    color: #f1f5f9 !important;
+    border-color: #1f293d !important;
+  }
+  
+  .bg-gray-50 {
+    background-color: #0b0f19 !important;
+  }
+  
+  .bg-gray-100 {
+    background-color: #1e293b !important; /* Slightly lighter slate for badges */
+    color: #cbd5e1 !important;
+  }
+
+  /* Borders & Dividers */
+  .border,
+  .border-gray-50,
+  .border-gray-100,
+  .border-gray-200,
+  .border-t,
+  .border-b,
+  .border-l,
+  .border-r,
+  hr {
+    border-color: #1e2a3f !important;
+  }
+
+  /* Texts */
+  .text-gray-900,
+  .text-gray-800,
+  .text-gray-700,
+  h1, h2, h3, h4, h5, h6 {
+    color: #f8fafc !important;
+  }
+
+  .text-gray-600,
+  .text-gray-500 {
+    color: #94a3b8 !important;
+  }
+
+  .text-gray-400 {
+    color: #64748b !important;
+  }
+
+  /* Interactive Elements, Inputs and Selects */
+  input[type="text"],
+  input[type="password"],
+  input[type="number"],
+  select,
+  textarea,
+  .bg-gray-50 input,
+  .bg-gray-50 select {
+    background-color: #0b0f19 !important;
+    color: #f1f5f9 !important;
+    border: 1px solid #1e2a3f !important;
+  }
+
+  input::placeholder {
+    color: #475569 !important;
+  }
+
+  /* Buttons & Hover states */
+  .hover\:bg-gray-50:hover {
+    background-color: #1e2a3f !important;
+  }
+
+  .hover\:bg-gray-100:hover {
+    background-color: #2e3c54 !important;
+  }
+
+  .hover\:bg-orange-50\/30:hover {
+    background-color: rgba(249, 115, 22, 0.1) !important;
+  }
+
+  .bg-orange-50 {
+    background-color: rgba(249, 115, 22, 0.1) !important;
+    color: #ffedd5 !important;
+  }
+  
+  .text-orange-600 {
+    color: #f97316 !important; /* Keep orange vibrant */
+  }
+
+  /* Specific Components */
+  /* Scrollbars in dark mode */
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #1e2a3f !important;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #f97316 !important;
+  }
+
+  /* Shadow controls for dark mode */
+  .shadow-sm, .shadow, .shadow-md, .shadow-lg, .shadow-2xl {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3) !important;
+  }
+  
+  /* Tables & Lists */
+  .divide-y > :not([hidden]) ~ :not([hidden]) {
+    border-color: #1e2a3f !important;
+  }
+}
+
