@@ -895,166 +895,176 @@ const LiveMonitor = ({ setConfirmAction }) => {
 
   return (
     <div className="flex-1 flex flex-col lg:flex-row overflow-hidden h-[calc(100vh-140px)] animate-in fade-in duration-500">
-      {/* Grilla de Mesas (Izquierda) */}
-      <div className="flex-1 p-8 overflow-y-auto custom-scrollbar border-r border-gray-100 flex flex-col">
-        <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h3 className="text-xl font-black text-gray-800 tracking-tighter uppercase italic">Monitoreo de mesas</h3>
-            <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Estado y consumos de mesas en tiempo real</p>
-          </div>
-          
-          {/* Selector de Pisos */}
-          <div className="flex bg-gray-100 p-1 rounded-xl shrink-0">
-            {[1, 2, 3].map(f => (
-              <button
-                key={f}
-                onClick={() => setSelectedFloor(f)}
-                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
-                  selectedFloor === f 
-                  ? 'bg-white text-orange-600 shadow-sm' 
-                  : 'text-gray-400 hover:text-gray-600'
-                }`}
-              >
-                Piso {f}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-6">
-          {([...tables].filter(t => t.number !== 0).sort((a, b) => a.number - b.number)).map(table => {
-            const isOcupada = activeOrders.some(o => o.tableId === table.id && o.floor === selectedFloor);
-            const orders = activeOrders.filter(o => o.tableId === table.id && o.floor === selectedFloor);
-            const total = orders.reduce((acc, o) => acc + o.total, 0);
-            const oldestOrder = orders.reduce((oldest, current) => {
-              if (!oldest) return current;
-              return new Date(current.createdAt) < new Date(oldest.createdAt) ? current : oldest;
-            }, null);
-            
-            return (
-              <button
-                key={table.id}
-                type="button"
-                onClick={() => {
-                  setSelectedTable({ ...table, floor: selectedFloor });
-                  setPrintSuccess(false);
-                  setIsMobileOpen(true);
-                }}
-                className={`relative p-6 rounded-[2rem] text-left border shadow-sm transition-all active:scale-95 flex flex-col justify-between h-44 cursor-pointer ${
-                  selectedTable?.id === table.id && selectedTable?.floor === selectedFloor
-                  ? 'border-orange-500 ring-2 ring-orange-500 bg-orange-50/20'
-                  : isOcupada
-                    ? 'bg-orange-50/50 border-orange-100'
-                    : 'bg-white border-gray-100 hover:border-orange-200'
-                }`}
-              >
-                <div>
-                  <h4 className="text-2xl font-black text-gray-800 italic leading-none">MESA {table.number}</h4>
-                  {isOcupada && oldestOrder ? (
-                    <div className="flex flex-col gap-1 mt-1.5 select-none">
-                      <span className="text-[10px] text-black font-black uppercase tracking-wider">
-                        Llegó: {new Date(oldestOrder.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                      <div>
-                        <TableTimer 
-                          createdAt={oldestOrder.createdAt} 
-                          isFinished={orders.length > 0 && orders.every(o => o.status === 'LISTO')}
-                          updatedAt={orders.reduce((latest, current) => {
-                            if (!latest) return current.updatedAt || current.createdAt;
-                            const curDate = new Date(current.updatedAt || current.createdAt);
-                            const latDate = new Date(latest);
-                            return curDate > latDate ? (current.updatedAt || current.createdAt) : latest;
-                          }, null)}
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <span className={`text-[8px] font-black px-2 py-0.5 rounded-full inline-block mt-2 tracking-widest uppercase ${
-                      isOcupada ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'
-                    }`}>
-                      {isOcupada ? 'OCUPADA' : 'LIBRE'}
-                    </span>
-                  )}
-                </div>
-                {isOcupada && (
-                  <p className="text-lg font-black text-orange-600 tracking-tighter">S/.{total.toFixed(2)}</p>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Sección Separada de Pedidos Para Llevar */}
-        <hr className="my-8 border-gray-100" />
+      {/* Panel Principal de Monitoreo (Izquierda - Dividido en dos columnas al lado) */}
+      <div className="flex-1 p-6 md:p-8 overflow-y-auto custom-scrollbar border-r border-gray-100 flex flex-col md:flex-row gap-6 xl:gap-8 bg-gray-50/10">
         
-        <div className="mb-6">
-          <h3 className="text-xl font-black text-gray-800 tracking-tighter uppercase italic flex items-center gap-2">
-            <span>📦</span> Pedidos para Llevar Activos
-          </h3>
-          <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">
-            Monitoreo y facturación de despachos rápidos
-          </p>
-        </div>
-
-        {activeOrders.filter(o => o.toGo).length === 0 ? (
-          <div className="bg-gray-50 border-2 border-dashed border-gray-100 p-10 rounded-[2rem] text-center text-gray-400 font-bold italic text-xs">
-            No hay pedidos para llevar activos en este momento
+        {/* Sub-panel 1: Mesas del Salón (Izquierda) */}
+        <div className="flex-1 flex flex-col min-w-0">
+          <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h3 className="text-xl font-black text-gray-800 tracking-tighter uppercase italic">Monitoreo de Mesas</h3>
+              <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Estado de mesas en tiempo real</p>
+            </div>
+            
+            {/* Selector de Pisos */}
+            <div className="flex bg-gray-100 p-1 rounded-xl shrink-0">
+              {[1, 2, 3].map(f => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setSelectedFloor(f)}
+                  className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
+                    selectedFloor === f 
+                    ? 'bg-white text-orange-600 shadow-sm' 
+                    : 'text-gray-400 hover:text-gray-600'
+                  }`}
+                >
+                  Piso {f}
+                </button>
+              ))}
+            </div>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-            {activeOrders.filter(o => o.toGo).map(order => {
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 xl:gap-6">
+            {([...tables].filter(t => t.number !== 0).sort((a, b) => a.number - b.number)).map(table => {
+              const isOcupada = activeOrders.some(o => o.tableId === table.id && o.floor === selectedFloor);
+              const orders = activeOrders.filter(o => o.tableId === table.id && o.floor === selectedFloor);
+              const total = orders.reduce((acc, o) => acc + o.total, 0);
+              const oldestOrder = orders.reduce((oldest, current) => {
+                if (!oldest) return current;
+                return new Date(current.createdAt) < new Date(oldest.createdAt) ? current : oldest;
+              }, null);
+              
               return (
                 <button
-                  key={order.id}
+                  key={table.id}
                   type="button"
                   onClick={() => {
-                    // Seleccionar la mesa virtual 0 asociada al pedido para llevar
-                    setSelectedTable({ id: order.tableId, number: 0, floor: 1 });
+                    setSelectedTable({ ...table, floor: selectedFloor });
                     setPrintSuccess(false);
                     setIsMobileOpen(true);
                   }}
-                  className={`relative p-6 rounded-[2rem] text-left border shadow-sm transition-all active:scale-95 flex flex-col justify-between h-44 cursor-pointer ${
-                    selectedTable?.id === order.tableId
+                  className={`relative p-5 rounded-[2rem] text-left border shadow-sm transition-all active:scale-95 flex flex-col justify-between h-40 cursor-pointer ${
+                    selectedTable?.id === table.id && selectedTable?.floor === selectedFloor
                     ? 'border-orange-500 ring-2 ring-orange-500 bg-orange-50/20'
-                    : 'bg-white border-gray-100 hover:border-orange-200 shadow-sm hover:shadow-md'
+                    : isOcupada
+                      ? 'bg-orange-50/50 border-orange-100'
+                      : 'bg-white border-gray-100 hover:border-orange-200'
                   }`}
                 >
-                  <div className="w-full min-w-0">
-                    <div className="flex justify-between items-start gap-2">
-                      <h4 className="text-base font-black text-orange-600 uppercase italic truncate tracking-tight">
-                        👤 {order.waiterName || 'Para Llevar'}
-                      </h4>
-                      <span className="text-[8px] bg-orange-100 text-orange-700 font-black px-2 py-0.5 rounded-full uppercase shrink-0">
-                        {order.items?.length || 0} ITEMS
-                      </span>
-                    </div>
-                    <div className="flex flex-col gap-1 mt-2.5">
-                      <span className="text-[10px] text-gray-400 font-black uppercase tracking-wider">
-                        Creado: {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                      <div>
-                        <TableTimer 
-                          createdAt={order.createdAt} 
-                          isFinished={order.status === 'LISTO' || (order.items && order.items.every(i => i.status === 'LISTO'))}
-                        />
+                  <div>
+                    <h4 className="text-xl font-black text-gray-800 italic leading-none">MESA {table.number}</h4>
+                    {isOcupada && oldestOrder ? (
+                      <div className="flex flex-col gap-1 mt-1.5 select-none">
+                        <span className="text-[9px] text-black font-black uppercase tracking-wider">
+                          Llegó: {new Date(oldestOrder.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                        <div>
+                          <TableTimer 
+                            createdAt={oldestOrder.createdAt} 
+                            isFinished={orders.length > 0 && orders.every(o => o.status === 'LISTO')}
+                            updatedAt={orders.reduce((latest, current) => {
+                              if (!latest) return current.updatedAt || current.createdAt;
+                              const curDate = new Date(current.updatedAt || current.createdAt);
+                              const latDate = new Date(latest);
+                              return curDate > latDate ? (current.updatedAt || current.createdAt) : latest;
+                            }, null)}
+                          />
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <span className={`text-[8px] font-black px-2 py-0.5 rounded-full inline-block mt-2 tracking-widest uppercase ${
+                        isOcupada ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'
+                      }`}>
+                        {isOcupada ? 'OCUPADA' : 'LIBRE'}
+                      </span>
+                    )}
                   </div>
-                  <div className="flex justify-between items-end w-full mt-3">
-                    <span className={`text-[9px] border px-2 py-0.5 rounded-full font-black uppercase ${
-                      order.status === 'LISTO' 
-                      ? 'bg-green-500/10 text-green-500 border-green-500/20' 
-                      : 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20 animate-pulse'
-                    }`}>
-                      {order.status}
-                    </span>
-                    <p className="text-xl font-black text-orange-600 tracking-tighter">S/.{order.total.toFixed(2)}</p>
-                  </div>
+                  {isOcupada && (
+                    <p className="text-base font-black text-orange-600 tracking-tighter">S/.{total.toFixed(2)}</p>
+                  )}
                 </button>
               );
             })}
           </div>
-        )}
+        </div>
+
+        {/* Divisor Vertical */}
+        <div className="hidden md:block w-[1.5px] bg-gray-200/60 self-stretch my-2 shrink-0" />
+
+        {/* Sub-panel 2: Pedidos para Llevar (Derecha del monitor) */}
+        <div className="w-full md:w-72 xl:w-[360px] flex flex-col shrink-0">
+          <div className="mb-6">
+            <h3 className="text-xl font-black text-gray-800 uppercase italic tracking-normal flex items-center gap-2">
+              <span>📦</span> Pedidos para Llevar
+            </h3>
+            <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">
+              Facturación de despachos rápidos
+            </p>
+          </div>
+
+          <div className="flex-1 space-y-4 pr-1">
+            {activeOrders.filter(o => o.toGo).length === 0 ? (
+              <div className="bg-gray-50/50 border-2 border-dashed border-gray-100 p-8 rounded-[2rem] text-center text-gray-400 font-bold italic text-xs">
+                No hay pedidos para llevar activos
+              </div>
+            ) : (
+              <div className="flex flex-col gap-4 overflow-y-auto max-h-[70vh] pr-2 custom-scrollbar">
+                {activeOrders.filter(o => o.toGo).map(order => {
+                  return (
+                    <button
+                      key={order.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedTable({ id: order.tableId, number: 0, floor: 1 });
+                        setPrintSuccess(false);
+                        setIsMobileOpen(true);
+                      }}
+                      className={`relative p-5 rounded-[2rem] text-left border shadow-sm transition-all active:scale-95 flex flex-col justify-between h-40 cursor-pointer ${
+                        selectedTable?.id === order.tableId
+                        ? 'border-orange-500 ring-2 ring-orange-500 bg-orange-50/20'
+                        : 'bg-white border-gray-100 hover:border-orange-200'
+                      }`}
+                    >
+                      <div className="w-full min-w-0">
+                        <div className="flex justify-between items-start gap-2">
+                          <h4 className="text-base font-black text-orange-600 uppercase italic truncate tracking-tight">
+                            👤 {order.waiterName || 'Para Llevar'}
+                          </h4>
+                          <span className="text-[8px] bg-orange-100 text-orange-700 font-black px-2 py-0.5 rounded-full uppercase shrink-0">
+                            {order.items?.length || 0} ITEMS
+                          </span>
+                        </div>
+                        <div className="flex flex-col gap-1 mt-2">
+                          <span className="text-[9px] text-gray-400 font-black uppercase tracking-wider">
+                            Creado: {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          <div>
+                            <TableTimer 
+                              createdAt={order.createdAt} 
+                              isFinished={order.status === 'LISTO' || (order.items && order.items.every(i => i.status === 'LISTO'))}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-end w-full mt-2">
+                        <span className={`text-[8px] border px-2 py-0.5 rounded-full font-black uppercase ${
+                          order.status === 'LISTO' 
+                          ? 'bg-green-500/10 text-green-500 border-green-500/20' 
+                          : 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20 animate-pulse'
+                        }`}>
+                          {order.status}
+                        </span>
+                        <p className="text-lg font-black text-orange-600 tracking-tighter">S/.{order.total.toFixed(2)}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
       </div>
 
       {/* Cuenta y Facturación (Derecha - Solo Desktop) */}
