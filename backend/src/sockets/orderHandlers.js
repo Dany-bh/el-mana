@@ -66,12 +66,24 @@ export const setupOrderSockets = (io, socket) => {
           }
         }
 
+        // Buscar o crear la mesa virtual 0 para pedidos para llevar
+        let finalTableId = orderData.tableId;
+        if (orderData.toGo) {
+          let takeawayTable = await tx.table.findUnique({ where: { number: 0 } });
+          if (!takeawayTable) {
+            takeawayTable = await tx.table.create({
+              data: { number: 0, status: 'LIBRE' }
+            });
+          }
+          finalTableId = takeawayTable.id;
+        }
+
         return await tx.order.create({
           data: {
-            tableId: orderData.tableId,
+            tableId: finalTableId,
             waiterId: orderData.waiterId,
             waiterName: orderData.waiterName || "Mozo",
-            floor: parseInt(orderData.floor) || 1,
+            floor: orderData.toGo ? 1 : (parseInt(orderData.floor) || 1),
             status: initialOrderStatus,
             total: orderData.items.reduce((acc, item) => acc + (item.price * item.quantity), 0),
             toGo: orderData.toGo || false,

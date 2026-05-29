@@ -80,8 +80,10 @@ export const useStore = create((set, get) => ({
   notifications: [],
   selectedTable: null,
   viewMode: 'MENU',
+  orderType: null, // 'SALON' | 'LLEVAR' | null
   setSelectedTable: (selectedTable) => set({ selectedTable }),
   setViewMode: (viewMode) => set({ viewMode }),
+  setOrderType: (orderType) => set({ orderType }),
   setCustomWaiterName: async (name) => {
     set({ customWaiterName: name });
     sessionStorage.setItem('el_mana_custom_waiter_name', name);
@@ -218,7 +220,7 @@ export const useStore = create((set, get) => ({
     }
     sessionStorage.removeItem('el_mana_user');
     sessionStorage.removeItem('el_mana_custom_waiter_name');
-    set({ user: null, socket: null, selectedTable: null, viewMode: 'MENU', customWaiterName: null });
+    set({ user: null, socket: null, selectedTable: null, viewMode: 'MENU', customWaiterName: null, orderType: null });
   },
 
   restoreSession: async () => {

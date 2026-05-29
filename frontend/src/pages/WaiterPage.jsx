@@ -312,7 +312,7 @@ const WaiterPage = () => {
           </header>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-            {([...tables].sort((a, b) => a.number - b.number)).map(table => {
+            {([...tables].filter(t => t.number !== 0).sort((a, b) => a.number - b.number)).map(table => {
               const occupiedFloors = [1, 2, 3].filter(f => 
                 activeOrders.some(o => o.tableId === table.id && o.floor === f)
               );
