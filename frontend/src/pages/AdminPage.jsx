@@ -878,8 +878,10 @@ const LiveMonitor = ({ setConfirmAction }) => {
   const handleCheckout = (onDone) => {
     if (!selectedTable) return;
     setConfirmAction({
-      title: '¿Cobrar y Liberar Mesa?',
-      message: `¿Estás seguro de registrar el cobro y liberar la Mesa ${selectedTable.number} en el Piso ${selectedTable.floor}? Se archivarán todos sus consumos en caja.`,
+      title: selectedTable.number === 0 ? '¿Cobrar y Finalizar Pedido?' : '¿Cobrar y Liberar Mesa?',
+      message: selectedTable.number === 0
+        ? `¿Estás seguro de registrar el cobro y finalizar este Pedido para Llevar? Se archivará en la caja.`
+        : `¿Estás seguro de registrar el cobro y liberar la Mesa ${selectedTable.number} en el Piso ${selectedTable.floor}? Se archivarán todos sus consumos en caja.`,
       isDangerous: false,
       onConfirm: async () => {
         await checkoutTable(selectedTable.id, selectedTable.floor);
@@ -920,7 +922,7 @@ const LiveMonitor = ({ setConfirmAction }) => {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-6">
-          {([...tables].sort((a, b) => a.number - b.number)).map(table => {
+          {([...tables].filter(t => t.number !== 0).sort((a, b) => a.number - b.number)).map(table => {
             const isOcupada = activeOrders.some(o => o.tableId === table.id && o.floor === selectedFloor);
             const orders = activeOrders.filter(o => o.tableId === table.id && o.floor === selectedFloor);
             const total = orders.reduce((acc, o) => acc + o.total, 0);
@@ -932,12 +934,13 @@ const LiveMonitor = ({ setConfirmAction }) => {
             return (
               <button
                 key={table.id}
+                type="button"
                 onClick={() => {
                   setSelectedTable({ ...table, floor: selectedFloor });
                   setPrintSuccess(false);
                   setIsMobileOpen(true);
                 }}
-                className={`relative p-6 rounded-[2rem] text-left border shadow-sm transition-all active:scale-95 flex flex-col justify-between h-44 ${
+                className={`relative p-6 rounded-[2rem] text-left border shadow-sm transition-all active:scale-95 flex flex-col justify-between h-44 cursor-pointer ${
                   selectedTable?.id === table.id && selectedTable?.floor === selectedFloor
                   ? 'border-orange-500 ring-2 ring-orange-500 bg-orange-50/20'
                   : isOcupada
@@ -980,6 +983,78 @@ const LiveMonitor = ({ setConfirmAction }) => {
             );
           })}
         </div>
+
+        {/* Sección Separada de Pedidos Para Llevar */}
+        <hr className="my-8 border-gray-100" />
+        
+        <div className="mb-6">
+          <h3 className="text-xl font-black text-gray-800 tracking-tighter uppercase italic flex items-center gap-2">
+            <span>📦</span> Pedidos para Llevar Activos
+          </h3>
+          <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">
+            Monitoreo y facturación de despachos rápidos
+          </p>
+        </div>
+
+        {activeOrders.filter(o => o.toGo).length === 0 ? (
+          <div className="bg-gray-50 border-2 border-dashed border-gray-100 p-10 rounded-[2rem] text-center text-gray-400 font-bold italic text-xs">
+            No hay pedidos para llevar activos en este momento
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+            {activeOrders.filter(o => o.toGo).map(order => {
+              return (
+                <button
+                  key={order.id}
+                  type="button"
+                  onClick={() => {
+                    // Seleccionar la mesa virtual 0 asociada al pedido para llevar
+                    setSelectedTable({ id: order.tableId, number: 0, floor: 1 });
+                    setPrintSuccess(false);
+                    setIsMobileOpen(true);
+                  }}
+                  className={`relative p-6 rounded-[2rem] text-left border shadow-sm transition-all active:scale-95 flex flex-col justify-between h-44 cursor-pointer ${
+                    selectedTable?.id === order.tableId
+                    ? 'border-orange-500 ring-2 ring-orange-500 bg-orange-50/20'
+                    : 'bg-white border-gray-100 hover:border-orange-200 shadow-sm hover:shadow-md'
+                  }`}
+                >
+                  <div className="w-full min-w-0">
+                    <div className="flex justify-between items-start gap-2">
+                      <h4 className="text-base font-black text-orange-600 uppercase italic truncate tracking-tight">
+                        👤 {order.waiterName || 'Para Llevar'}
+                      </h4>
+                      <span className="text-[8px] bg-orange-100 text-orange-700 font-black px-2 py-0.5 rounded-full uppercase shrink-0">
+                        {order.items?.length || 0} ITEMS
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-1 mt-2.5">
+                      <span className="text-[10px] text-gray-400 font-black uppercase tracking-wider">
+                        Creado: {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      <div>
+                        <TableTimer 
+                          createdAt={order.createdAt} 
+                          isFinished={order.status === 'LISTO' || (order.items && order.items.every(i => i.status === 'LISTO'))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-end w-full mt-3">
+                    <span className={`text-[9px] border px-2 py-0.5 rounded-full font-black uppercase ${
+                      order.status === 'LISTO' 
+                      ? 'bg-green-500/10 text-green-500 border-green-500/20' 
+                      : 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20 animate-pulse'
+                    }`}>
+                      {order.status}
+                    </span>
+                    <p className="text-xl font-black text-orange-600 tracking-tighter">S/.{order.total.toFixed(2)}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Cuenta y Facturación (Derecha - Solo Desktop) */}
@@ -989,9 +1064,13 @@ const LiveMonitor = ({ setConfirmAction }) => {
             {/* Detalle Consumos */}
             <div className="p-6 border-b border-gray-100 bg-white flex justify-between items-center shrink-0">
               <div>
-                <h3 className="text-lg font-black text-gray-800 tracking-tighter uppercase italic">Mesa {selectedTable.number} - Piso {selectedTable.floor}</h3>
+                <h3 className="text-lg font-black text-gray-800 tracking-tighter uppercase italic">
+                  {selectedTable.number === 0 ? '📦 PEDIDO PARA LLEVAR' : `Mesa ${selectedTable.number} - Piso ${selectedTable.floor}`}
+                </h3>
                 <div className="flex flex-col gap-1 mt-1">
-                  <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest leading-none">Consumos activos de mesa</p>
+                  <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest leading-none">
+                    {selectedTable.number === 0 ? 'Detalles de comanda rápida' : 'Consumos activos de mesa'}
+                  </p>
                   {oldestOrder && (
                     <div className="flex items-center gap-1.5 z-10">
                       <span className="text-[10px] text-black font-black uppercase tracking-wider">
