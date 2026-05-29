@@ -53,12 +53,10 @@ const LoginPage = ({ onLogin }) => {
 
       <div className="relative z-10 bg-white/95 backdrop-blur-xl p-8 rounded-3xl shadow-2xl w-full max-w-sm text-center border border-white/30">
         {/* Logo & Title */}
-        <div className="mb-10">
-          <div className="bg-gradient-to-r from-orange-600 to-orange-500 p-3 rounded-2xl inline-flex mb-4 shadow-lg">
-            <span className="text-3xl font-black text-white italic tracking-tighter">MANÁ</span>
+        <div className="mb-8">
+          <div className="bg-gradient-to-r from-orange-600 to-orange-500 px-6 py-3 rounded-2xl inline-flex shadow-lg">
+            <span className="text-xl sm:text-2xl font-black text-white italic tracking-tight uppercase">EL MANÁ Y SU SAZÓN</span>
           </div>
-          <h2 className="text-2xl font-black text-gray-800 tracking-tighter uppercase italic mb-1">El Maná</h2>
-          <p className="text-gray-500 font-bold text-xs tracking-[0.2em]">SISTEMA POS PROFESIONAL</p>
         </div>
 
         {/* PIN Visualization */}
