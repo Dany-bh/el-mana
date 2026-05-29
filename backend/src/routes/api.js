@@ -222,75 +222,133 @@ router.post('/auth/update-name', async (req, res) => {
   }
 });
 
-// Consulta DNI (RENIEC) y RUC (SUNAT) con APIs de Perú
+// Función scraper auxiliar para obtener DNI real-time gratis y sin token
+async function scrapeDni(dni) {
+  try {
+    const mainResponse = await fetch('https://eldni.com/pe/buscar-datos-por-dni', {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      }
+    });
+
+    if (!mainResponse.ok) return null;
+
+    const cookies = mainResponse.headers.get('set-cookie');
+    const html = await mainResponse.text();
+    
+    const tokenMatch = html.match(/name="_token"\s+value="([^"]+)"/);
+    if (!tokenMatch) return null;
+    const token = tokenMatch[1];
+
+    const cookieHeader = cookies ? cookies.split(',').map(c => c.split(';')[0]).join('; ') : '';
+
+    const postResponse = await fetch('https://eldni.com/pe/buscar-datos-por-dni', {
+      method: 'POST',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Cookie': cookieHeader,
+        'Referer': 'https://eldni.com/pe/buscar-datos-por-dni'
+      },
+      body: `_token=${token}&dni=${dni}`
+    });
+
+    if (postResponse.ok) {
+      const resultHtml = await postResponse.text();
+      const tds = resultHtml.match(/<td>([^<]+)<\/td>/g);
+      if (tds && tds.length >= 4) {
+        const nombres = tds[1].replace(/<\/?td>/g, '').trim();
+        const paterno = tds[2].replace(/<\/?td>/g, '').trim();
+        const materno = tds[3].replace(/<\/?td>/g, '').trim();
+        return {
+          nombres,
+          apellidoPaterno: paterno,
+          apellidoMaterno: materno,
+          numeroDocumento: dni
+        };
+      }
+    }
+  } catch (err) {
+    console.error('[scrapeDni] Error scraping eldni.com:', err);
+  }
+  return null;
+}
+
+// Consulta DNI (RENIEC) y RUC (SUNAT) con APIs y Scrapers de Perú
 router.get('/reniec-sunat/lookup', async (req, res) => {
   const { type, number } = req.query;
   if (!number) {
     return res.status(400).json({ error: 'Número de documento requerido.' });
   }
 
-  // Token de apis.net.pe (puede pasarse por variable de entorno o usar token por defecto para desarrollo)
-  const token = process.env.APIS_TOKEN || 'apis-token-11440.Xk7HhVq8iP0sF2zT3b4M6n8r5u9w1v7y';
-
-  try {
-    let url = '';
-    if (type === 'DNI') {
-      url = `https://api.apis.net.pe/v2/reniec/dni?numero=${number}`;
-    } else if (type === 'RUC') {
-      url = `https://api.apis.net.pe/v2/sunat/ruc?numero=${number}`;
-    } else {
-      return res.status(400).json({ error: 'Tipo de documento inválido (DNI o RUC).' });
-    }
-
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Authorization': `Bearer ${token}`
-      }
-    });
-
-    if (!response.ok) {
-      console.warn(`[RENIEC/SUNAT API] Falló con estado ${response.status}. Retornando mock de demostración.`);
-      
-      // Simulador de respaldo si el token expira o supera el límite del plan gratuito, para no bloquear al usuario
-      if (type === 'DNI') {
-        return res.json({
-          nombres: "DANY JUNIOR",
-          apellidoPaterno: "BURGOS",
-          apellidoMaterno: "RODRIGUEZ",
-          numeroDocumento: number
-        });
-      } else {
-        return res.json({
-          razonSocial: "EL MANÁ Y SU SAZÓN S.A.C.",
-          numeroDocumento: number,
-          estado: "ACTIVO",
-          condicion: "HABIDO"
-        });
-      }
-    }
-
-    const data = await response.json();
-    res.json(data);
-  } catch (err) {
-    console.error('[RENIEC/SUNAT API] Error de conexión:', err);
-    // Retorno fallback mockeado para que el flujo en caja nunca se interrumpa por caídas de internet/API externa
-    if (type === 'DNI') {
+  // Si es RUC 10 (Persona Natural con negocio), podemos extraer el DNI y usar el scraper de DNI de forma 100% gratuita
+  if (type === 'RUC' && number.startsWith('10') && number.length === 11) {
+    const extractedDni = number.substring(2, 10);
+    const scraped = await scrapeDni(extractedDni);
+    if (scraped) {
+      const fullName = `${scraped.nombres} ${scraped.apellidoPaterno} ${scraped.apellidoMaterno}`;
       return res.json({
-        nombres: "DANY JUNIOR",
-        apellidoPaterno: "BURGOS",
-        apellidoMaterno: "RODRIGUEZ",
-        numeroDocumento: number
-      });
-    } else {
-      return res.json({
-        razonSocial: "EL MANÁ Y SU SAZÓN S.A.C.",
+        razonSocial: fullName,
         numeroDocumento: number,
         estado: "ACTIVO",
         condicion: "HABIDO"
       });
     }
+  }
+
+  // Si es DNI, intentamos primero con el scraper público 100% gratuito sin token
+  if (type === 'DNI') {
+    const scraped = await scrapeDni(number);
+    if (scraped) {
+      return res.json(scraped);
+    }
+  }
+
+  // Si el scraper falla o es RUC 20, intentamos usar el token configurado por el usuario en las variables de entorno
+  const token = process.env.APIS_TOKEN;
+
+  if (token) {
+    try {
+      let url = '';
+      if (type === 'DNI') {
+        url = `https://api.apis.net.pe/v2/reniec/dni?numero=${number}`;
+      } else if (type === 'RUC') {
+        url = `https://api.apis.net.pe/v2/sunat/ruc?numero=${number}`;
+      }
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return res.json(data);
+      }
+    } catch (err) {
+      console.error('[RENIEC/SUNAT API] Error con token externo:', err);
+    }
+  }
+
+  // Fallback si no hay token o la consulta falló por completo
+  console.warn(`[RENIEC/SUNAT] Usando simulación de demostración para el fallback.`);
+  if (type === 'DNI') {
+    return res.json({
+      nombres: "DANY JUNIOR",
+      apellidoPaterno: "BURGOS",
+      apellidoMaterno: "RODRIGUEZ",
+      numeroDocumento: number
+    });
+  } else {
+    return res.json({
+      razonSocial: "EL MANÁ Y SU SAZÓN S.A.C.",
+      numeroDocumento: number,
+      estado: "ACTIVO",
+      condicion: "HABIDO"
+    });
   }
 });
 
