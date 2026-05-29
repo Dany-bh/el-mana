@@ -101,10 +101,10 @@ const AdminPage = () => {
     try {
       const submitData = { ...formData };
       
-      // Client-side duplicate check
+      // Client-side duplicate check (with whitespace normalization)
       if (editingType === 'products') {
-        const trimmedName = submitData.name?.trim().toLowerCase();
-        const duplicate = data.find(p => p.name?.trim().toLowerCase() === trimmedName && (!editingItem || p.id !== editingItem.id));
+        const normalizedNewName = submitData.name?.trim().replace(/\s+/g, ' ').toLowerCase();
+        const duplicate = data.find(p => p.name?.trim().replace(/\s+/g, ' ').toLowerCase() === normalizedNewName && (!editingItem || p.id !== editingItem.id));
         if (duplicate) {
           alert("Ya existe un producto con este nombre en el menú.");
           return;
@@ -112,16 +112,24 @@ const AdminPage = () => {
       }
       
       if (editingType === 'categories') {
-        const trimmedName = submitData.name?.trim().toLowerCase();
-        const duplicate = data.find(c => c.name?.trim().toLowerCase() === trimmedName && (!editingItem || c.id !== editingItem.id));
+        const normalizedNewName = submitData.name?.trim().replace(/\s+/g, ' ').toLowerCase();
+        const duplicate = data.find(c => c.name?.trim().replace(/\s+/g, ' ').toLowerCase() === normalizedNewName && (!editingItem || c.id !== editingItem.id));
         if (duplicate) {
           alert("Ya existe una categoría con este nombre.");
           return;
         }
       }
 
-      if (editingType === 'products' && !submitData.categoryId) {
-        submitData.categoryId = categories[0]?.id || '';
+      if (editingType === 'products') {
+        if (!submitData.categoryId) {
+          submitData.categoryId = categories[0]?.id || '';
+        }
+        // Auto-clear size if not a beverage
+        const selectedCat = categories.find(c => c.id === submitData.categoryId);
+        const isBeverage = selectedCat && selectedCat.name.toLowerCase().includes('bebida');
+        if (!isBeverage) {
+          submitData.size = null;
+        }
       }
 
       if (editingItem) {
@@ -641,32 +649,38 @@ const AdminPage = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6 relative">
-              {editingType === 'products' && (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="col-span-2 sm:col-span-1">
-                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Nombre</label>
-                      <input type="text" className="w-full p-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-orange-500 outline-none transition-all font-bold" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required />
+              {editingType === 'products' && (() => {
+                const selectedCat = categories.find(c => c.id === (formData.categoryId || categories[0]?.id));
+                const isBeverage = selectedCat && selectedCat.name.toLowerCase().includes('bebida');
+                return (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className={isBeverage ? "col-span-2 sm:col-span-1" : "col-span-2"}>
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Nombre</label>
+                        <input type="text" className="w-full p-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-orange-500 outline-none transition-all font-bold" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required />
+                      </div>
+                      {isBeverage && (
+                        <div className="col-span-2 sm:col-span-1">
+                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Tamaño (opcional)</label>
+                          <input type="text" placeholder="Ej: 1L, Personal" className="w-full p-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-orange-500 outline-none transition-all font-bold" value={formData.size || ''} onChange={e => setFormData({...formData, size: e.target.value})} />
+                        </div>
+                      )}
                     </div>
-                    <div className="col-span-2 sm:col-span-1">
-                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Tamaño (opcional)</label>
-                      <input type="text" placeholder="Ej: 1L, Personal" className="w-full p-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-orange-500 outline-none transition-all font-bold" value={formData.size || ''} onChange={e => setFormData({...formData, size: e.target.value})} />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Precio</label>
+                        <input type="number" step="0.1" className="w-full p-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-orange-500 outline-none transition-all font-bold" value={formData.price} onChange={e => setFormData({...formData, price: parseFloat(e.target.value)})} required />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Categoría</label>
+                        <select className="w-full p-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-orange-500 outline-none transition-all font-bold" value={formData.categoryId} onChange={e => setFormData({...formData, categoryId: e.target.value})} required>
+                          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                        </select>
+                      </div>
                     </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Precio</label>
-                      <input type="number" step="0.1" className="w-full p-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-orange-500 outline-none transition-all font-bold" value={formData.price} onChange={e => setFormData({...formData, price: parseFloat(e.target.value)})} required />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Categoría</label>
-                      <select className="w-full p-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-orange-500 outline-none transition-all font-bold" value={formData.categoryId} onChange={e => setFormData({...formData, categoryId: e.target.value})} required>
-                        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                      </select>
-                    </div>
-                  </div>
-                </>
-              )}
+                  </>
+                );
+              })()}
 
               {editingType === 'categories' && (
                 <div>

@@ -29,15 +29,10 @@ router.post('/categories', async (req, res) => {
   try {
     const { name } = req.body;
     if (name) {
-      const existing = await prisma.category.findFirst({
-        where: {
-          name: {
-            equals: name.trim(),
-            mode: 'insensitive'
-          }
-        }
-      });
-      if (existing) {
+      const normalizedNewName = name.trim().replace(/\s+/g, ' ').toLowerCase();
+      const allCategories = await prisma.category.findMany();
+      const duplicate = allCategories.find(c => c.name.trim().replace(/\s+/g, ' ').toLowerCase() === normalizedNewName);
+      if (duplicate) {
         return res.status(400).json({ error: 'Ya existe una categoría con este nombre.' });
       }
     }
@@ -50,18 +45,10 @@ router.put('/categories/:id', async (req, res) => {
   try {
     const { name } = req.body;
     if (name) {
-      const existing = await prisma.category.findFirst({
-        where: {
-          name: {
-            equals: name.trim(),
-            mode: 'insensitive'
-          },
-          id: {
-            not: req.params.id
-          }
-        }
-      });
-      if (existing) {
+      const normalizedNewName = name.trim().replace(/\s+/g, ' ').toLowerCase();
+      const allCategories = await prisma.category.findMany();
+      const duplicate = allCategories.find(c => c.name.trim().replace(/\s+/g, ' ').toLowerCase() === normalizedNewName && c.id !== req.params.id);
+      if (duplicate) {
         return res.status(400).json({ error: 'Ya existe otra categoría con este nombre.' });
       }
     }
@@ -101,15 +88,10 @@ router.post('/products', async (req, res) => {
   try {
     const { name } = req.body;
     if (name) {
-      const existing = await prisma.product.findFirst({
-        where: {
-          name: {
-            equals: name.trim(),
-            mode: 'insensitive'
-          }
-        }
-      });
-      if (existing) {
+      const normalizedNewName = name.trim().replace(/\s+/g, ' ').toLowerCase();
+      const allProducts = await prisma.product.findMany();
+      const duplicate = allProducts.find(p => p.name.trim().replace(/\s+/g, ' ').toLowerCase() === normalizedNewName);
+      if (duplicate) {
         return res.status(400).json({ error: 'Ya existe un producto con este nombre en el menú.' });
       }
     }
@@ -122,18 +104,10 @@ router.put('/products/:id', async (req, res) => {
   try {
     const { name } = req.body;
     if (name) {
-      const existing = await prisma.product.findFirst({
-        where: {
-          name: {
-            equals: name.trim(),
-            mode: 'insensitive'
-          },
-          id: {
-            not: req.params.id
-          }
-        }
-      });
-      if (existing) {
+      const normalizedNewName = name.trim().replace(/\s+/g, ' ').toLowerCase();
+      const allProducts = await prisma.product.findMany();
+      const duplicate = allProducts.find(p => p.name.trim().replace(/\s+/g, ' ').toLowerCase() === normalizedNewName && p.id !== req.params.id);
+      if (duplicate) {
         return res.status(400).json({ error: 'Ya existe otro producto con este nombre en el menú.' });
       }
     }
