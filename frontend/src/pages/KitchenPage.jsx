@@ -430,9 +430,9 @@ const KitchenPage = () => {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
           {/* Columna Local (Mesas) */}
           <div className="space-y-6">
-            <div className="flex items-center gap-3 border-b border-[#2d323a] pb-3 bg-[#111317]/20 p-4 rounded-2xl">
+            <div className="flex items-center gap-3 border border-emerald-200 bg-emerald-50/70 p-4 rounded-[2rem] shadow-sm shadow-emerald-50/20">
               <span className="text-2xl">🍽️</span>
-              <h3 className="text-lg font-black text-white uppercase italic tracking-wider">Consumo en Local ({pendingOrders.filter(o => !o.toGo).length})</h3>
+              <h3 className="text-lg font-black text-emerald-800 uppercase italic tracking-wider">Consumo en Local ({pendingOrders.filter(o => !o.toGo).length})</h3>
             </div>
             {pendingOrders.filter(o => !o.toGo).length === 0 ? (
               <div className="bg-[#1a1d23]/40 border-2 border-dashed border-[#2d323a] p-12 rounded-[2rem] text-center text-gray-500 font-bold italic">
@@ -449,9 +449,9 @@ const KitchenPage = () => {
 
           {/* Columna Para Llevar (Llevar) */}
           <div className="space-y-6">
-            <div className="flex items-center gap-3 border-b border-[#2d323a] pb-3 bg-[#111317]/20 p-4 rounded-2xl">
+            <div className="flex items-center gap-3 border border-orange-200 bg-orange-50/70 p-4 rounded-[2rem] shadow-sm shadow-orange-50/20">
               <span className="text-2xl">📦</span>
-              <h3 className="text-lg font-black text-orange-500 uppercase italic tracking-wider">Pedidos Para Llevar ({pendingOrders.filter(o => o.toGo).length})</h3>
+              <h3 className="text-lg font-black text-orange-800 uppercase italic tracking-wider">Pedidos Para Llevar ({pendingOrders.filter(o => o.toGo).length})</h3>
             </div>
             {pendingOrders.filter(o => o.toGo).length === 0 ? (
               <div className="bg-[#1a1d23]/40 border-2 border-dashed border-[#2d323a] p-12 rounded-[2rem] text-center text-gray-500 font-bold italic">
