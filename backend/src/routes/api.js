@@ -334,20 +334,60 @@ router.get('/reniec-sunat/lookup', async (req, res) => {
   }
 
   // Fallback si no hay token o la consulta falló por completo
-  console.warn(`[RENIEC/SUNAT] Usando simulación de demostración para el fallback.`);
+  console.warn(`[RENIEC/SUNAT] Usando simulación de demostración dinámica para el fallback.`);
+  
+  const NOMBRES_MOCK = ["JUAN", "MARIA", "CARLOS", "ANA", "LUIS", "ROSA", "JORGE", "ELIZABETH", "PEDRO", "CARMEN", "DANIEL", "GLADYS", "JOSE", "PATRICIA", "MANUEL", "TERESA"];
+  const APELLIDOS_MOCK = ["QUISPE", "FLORES", "SANCHEZ", "RODRIGUEZ", "GARCIA", "ROJAS", "DIAZ", "TORRES", "LOPEZ", "GONZALES", "RAMIREZ", "MENDOZA", "CHAVEZ", "ESPINOSA", "CASTILLO", "HUAMAN"];
+
   if (type === 'DNI') {
+    // Si es el DNI específico de Dany Burgos, devolvemos su nombre real para que se sienta personalizado!
+    if (number === '76637613') {
+      return res.json({
+        nombres: "DANY JUNIOR",
+        apellidoPaterno: "BURGOS",
+        apellidoMaterno: "RODRIGUEZ",
+        numeroDocumento: number,
+        isDemo: true
+      });
+    }
+
+    const sum = number.split('').reduce((acc, digit) => acc + (parseInt(digit) || 0), 0);
+    const nameIndex = sum % NOMBRES_MOCK.length;
+    const pIndex = (sum + 3) % APELLIDOS_MOCK.length;
+    const mIndex = (sum + 7) % APELLIDOS_MOCK.length;
+
     return res.json({
-      nombres: "DANY JUNIOR",
-      apellidoPaterno: "BURGOS",
-      apellidoMaterno: "RODRIGUEZ",
-      numeroDocumento: number
+      nombres: NOMBRES_MOCK[nameIndex],
+      apellidoPaterno: APELLIDOS_MOCK[pIndex],
+      apellidoMaterno: APELLIDOS_MOCK[mIndex],
+      numeroDocumento: number,
+      isDemo: true
     });
   } else {
+    // RUC
+    if (number.startsWith('1076637613')) {
+      return res.json({
+        razonSocial: "DANY JUNIOR BURGOS RODRIGUEZ",
+        numeroDocumento: number,
+        estado: "ACTIVO",
+        condicion: "HABIDO",
+        isDemo: true
+      });
+    }
+
+    const sum = number.split('').reduce((acc, digit) => acc + (parseInt(digit) || 0), 0);
+    const APELLIDOS = ["INVERSIONES", "DISTRIBUIDORA", "SERVICIOS MULTIPLES", "CONSTRUCTORA", "CORPORACION", "NEGOCIOS"];
+    const GIROS = ["ALIMENTOS & BEBIDAS", "DE CHICLAYO", "EL MANÁ Y SU SAZÓN", "DE NORTE E.I.R.L.", "DELICIAS", "BUR BUR"];
+    
+    const index1 = sum % APELLIDOS.length;
+    const index2 = (sum + 5) % GIROS.length;
+
     return res.json({
-      razonSocial: "EL MANÁ Y SU SAZÓN S.A.C.",
+      razonSocial: `${APELLIDOS[index1]} ${GIROS[index2]} S.A.C.`,
       numeroDocumento: number,
       estado: "ACTIVO",
-      condicion: "HABIDO"
+      condicion: "HABIDO",
+      isDemo: true
     });
   }
 });
