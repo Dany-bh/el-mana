@@ -125,10 +125,24 @@
   .bg-gray-50 {
     background-color: #0b0f19 !important;
   }
+
+  /* Gray gradients override for dark mode (makes PIN pad and gray buttons dark slate) */
+  .bg-gradient-to-br.from-gray-100.to-gray-50,
+  .from-gray-100,
+  .to-gray-50 {
+    background-image: none !important;
+    background-color: #1e293b !important;
+    border-color: #2e3c54 !important;
+  }
   
   .bg-gray-100 {
-    background-color: #1e293b !important; /* Slightly lighter slate for badges */
+    background-color: #1e293b !important;
     color: #cbd5e1 !important;
+  }
+
+  .bg-gray-200 {
+    background-color: #334155 !important;
+    color: #f1f5f9 !important;
   }
 
   /* Borders & Dividers */
@@ -136,6 +150,7 @@
   .border-gray-50,
   .border-gray-100,
   .border-gray-200,
+  .border-gray-300,
   .border-t,
   .border-b,
   .border-l,
@@ -145,6 +160,7 @@
   }
 
   /* Texts */
+  .text-gray-950,
   .text-gray-900,
   .text-gray-800,
   .text-gray-700,
@@ -153,12 +169,24 @@
   }
 
   .text-gray-600,
-  .text-gray-500 {
-    color: #94a3b8 !important;
+  .text-gray-500,
+  .text-gray-300 {
+    color: #cbd5e1 !important;
   }
 
   .text-gray-400 {
     color: #64748b !important;
+  }
+
+  /* Red Buttons and errors */
+  .bg-red-50 {
+    background-color: rgba(239, 68, 68, 0.15) !important;
+    color: #fca5a5 !important;
+    border-color: rgba(239, 68, 68, 0.2) !important;
+  }
+  
+  .text-red-600 {
+    color: #f87171 !important;
   }
 
   /* Interactive Elements, Inputs and Selects */
@@ -189,6 +217,11 @@
 
   .hover\:bg-orange-50\/30:hover {
     background-color: rgba(249, 115, 22, 0.1) !important;
+  }
+  
+  .hover\:from-orange-100:hover {
+    background-image: none !important;
+    background-color: rgba(249, 115, 22, 0.2) !important;
   }
 
   .bg-orange-50 {
