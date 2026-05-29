@@ -832,6 +832,8 @@ const LiveMonitor = ({ setConfirmAction }) => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [monitorTab, setMonitorTab] = useState('tables'); // 'tables' | 'togo'
   const [docLoading, setDocLoading] = useState(false);
+  const [isTokenModalOpen, setIsTokenModalOpen] = useState(false);
+  const [savedToken, setSavedToken] = useState(localStorage.getItem('el_mana_apis_token') || '');
 
   // Auto-fetch DNI (RENIEC) or RUC (SUNAT) when length is 8 or 11
   useEffect(() => {
@@ -845,7 +847,8 @@ const LiveMonitor = ({ setConfirmAction }) => {
           const res = await api.get('/api/reniec-sunat/lookup', {
             params: {
               type: isRuc ? 'RUC' : 'DNI',
-              number: docNumber
+              number: docNumber,
+              token: savedToken
             }
           });
           
@@ -1213,7 +1216,17 @@ const LiveMonitor = ({ setConfirmAction }) => {
 
             {/* Facturación y POS */}
             <div className="p-6 bg-white space-y-4 shadow-2xl border-t border-gray-100 shrink-0">
-              <h4 className="text-xs font-black text-gray-800 uppercase tracking-widest italic border-b border-gray-50 pb-2">Comprobante y Pago</h4>
+              <div className="flex justify-between items-center border-b border-gray-50 pb-2">
+                <h4 className="text-xs font-black text-gray-800 uppercase tracking-widest italic">Comprobante y Pago</h4>
+                <button
+                  type="button"
+                  onClick={() => setIsTokenModalOpen(true)}
+                  className="p-1 hover:bg-orange-50 text-gray-400 hover:text-orange-600 rounded-md transition-colors cursor-pointer"
+                  title="Configurar Token RENIEC / SUNAT"
+                >
+                  <Tag size={14} strokeWidth={2.5} />
+                </button>
+              </div>
               
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -1368,7 +1381,17 @@ const LiveMonitor = ({ setConfirmAction }) => {
 
               {/* Facturación y POS en Modal */}
               <div className="space-y-4 shrink-0">
-                <h4 className="text-xs font-black text-gray-800 uppercase tracking-widest italic pb-2 border-b border-gray-50">Comprobante y Pago</h4>
+                <div className="flex justify-between items-center border-b border-gray-50 pb-2">
+                  <h4 className="text-xs font-black text-gray-800 uppercase tracking-widest italic">Comprobante y Pago</h4>
+                  <button
+                    type="button"
+                    onClick={() => setIsTokenModalOpen(true)}
+                    className="p-1 hover:bg-orange-50 text-gray-400 hover:text-orange-600 rounded-md transition-colors cursor-pointer"
+                    title="Configurar Token RENIEC / SUNAT"
+                  >
+                    <Tag size={14} strokeWidth={2.5} />
+                  </button>
+                </div>
                 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -1444,6 +1467,67 @@ const LiveMonitor = ({ setConfirmAction }) => {
                 className="flex-1 bg-orange-600 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg hover:bg-orange-500 transition-all active:scale-95 text-[10px] tracking-widest uppercase cursor-pointer"
               >
                 <CheckCircle size={16} /> Cobrar y Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Configuración de Token RENIEC / SUNAT */}
+      {isTokenModalOpen && (
+        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100] animate-in fade-in duration-300">
+          <div className="bg-white rounded-[2.5rem] p-8 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-300 relative overflow-hidden">
+            {/* Ambient decoration */}
+            <div className="absolute top-0 right-0 w-24 h-24 bg-orange-600/5 rounded-bl-[4rem]" />
+            
+            <div className="flex justify-between items-center mb-6 border-b border-gray-50 pb-4">
+              <div>
+                <h3 className="text-xl font-black text-gray-800 tracking-tighter uppercase italic flex items-center gap-2">
+                  🔑 Token RENIEC & SUNAT
+                </h3>
+                <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mt-0.5">Activar consultas reales en caja</p>
+              </div>
+              <button 
+                onClick={() => setIsTokenModalOpen(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <p className="text-xs text-gray-500 font-medium leading-relaxed">
+                Para activar la consulta automática y 100% real de nombres de clientes y razones sociales en tiempo real, obtén tu token gratuito en <a href="https://apis.net.pe" target="_blank" rel="noopener noreferrer" className="text-orange-600 font-black hover:underline">apis.net.pe</a> y pégalo aquí:
+              </p>
+
+              <div>
+                <label className="block text-xs font-black text-gray-800 uppercase tracking-widest mb-1.5 px-1">Token Personal (apis.net.pe)</label>
+                <input
+                  type="text"
+                  value={savedToken}
+                  onChange={(e) => setSavedToken(e.target.value)}
+                  placeholder="apis-token-11440.Xk7..."
+                  className="w-full p-3.5 bg-gray-50 border-none rounded-2xl text-xs font-bold focus:ring-2 focus:ring-orange-500 outline-none transition-all"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-8">
+              <button
+                onClick={() => setIsTokenModalOpen(false)}
+                className="flex-1 bg-gray-100 text-gray-500 font-black py-4 rounded-2xl text-xs hover:bg-gray-200 transition-all uppercase tracking-widest cursor-pointer active:scale-95"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  localStorage.setItem('el_mana_apis_token', savedToken);
+                  setIsTokenModalOpen(false);
+                  alert("¡Token guardado exitosamente! Ahora las consultas se realizarán con tus credenciales.");
+                }}
+                className="flex-1 bg-orange-600 text-white font-black py-4 rounded-2xl text-xs shadow-lg hover:bg-orange-500 transition-all uppercase tracking-widest cursor-pointer active:scale-95"
+              >
+                Guardar y Activar
               </button>
             </div>
           </div>

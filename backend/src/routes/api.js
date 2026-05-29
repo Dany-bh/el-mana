@@ -304,8 +304,8 @@ router.get('/reniec-sunat/lookup', async (req, res) => {
     }
   }
 
-  // Si el scraper falla o es RUC 20, intentamos usar el token configurado por el usuario en las variables de entorno
-  const token = process.env.APIS_TOKEN;
+  // Si el scraper falla o es RUC 20, intentamos usar el token enviado desde el cliente o de las variables de entorno
+  const token = req.query.token || process.env.APIS_TOKEN;
 
   if (token) {
     try {
