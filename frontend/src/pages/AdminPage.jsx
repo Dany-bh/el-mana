@@ -303,45 +303,45 @@ const AdminPage = () => {
                 </div>
               </div>
 
-              {/* Detalle en secciones separadas verticalmente */}
-              <div className="grid grid-cols-1 gap-10">
+              {/* Detalle en dos columnas */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Ranking de Productos */}
                 <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm flex flex-col">
-                  <div className="mb-4">
-                    <h3 className="text-lg font-black text-gray-800 tracking-tighter uppercase italic">Ranking de Productos</h3>
-                    <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Los platos y bebidas más vendidos</p>
-                  </div>
-                  <div className="space-y-4 max-h-96 overflow-y-auto custom-scrollbar pr-2 flex-1">
-                    {salesData.productSales.length === 0 ? (
-                      <p className="text-gray-400 text-sm py-10 text-center font-bold uppercase tracking-widest">No hay platos vendidos aún</p>
-                    ) : (
-                      salesData.productSales.map((product, idx) => (
-                        <div key={idx} className="flex justify-between items-center p-3 rounded-2xl hover:bg-orange-50/30 transition-colors">
-                          <div className="flex items-center gap-3">
-                            <span className="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center font-black text-xs">
-                              {idx + 1}
-                            </span>
-                            <div>
-                              <p className="font-bold text-gray-800 uppercase italic text-sm">{product.name}</p>
-                              {product.size && <span className="text-xs bg-gray-200/60 px-2 py-0.5 rounded-md text-gray-900 font-black uppercase tracking-tighter">{product.size}</span>}
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-black text-gray-800 text-sm">{product.quantity} u.</p>
-                            <p className="text-xs text-orange-600 font-black tracking-tighter">S/.{product.total.toFixed(2)}</p>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
+                   <div className="mb-4">
+                     <h3 className="text-lg font-black text-gray-800 tracking-wide uppercase italic">Ranking de Productos</h3>
+                     <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Los platos y bebidas más vendidos</p>
+                   </div>
+                   <div className="space-y-4 max-h-96 overflow-y-auto custom-scrollbar pr-2 flex-1">
+                     {salesData.productSales.length === 0 ? (
+                       <p className="text-gray-400 text-sm py-10 text-center font-bold uppercase tracking-widest">No hay platos vendidos aún</p>
+                     ) : (
+                       salesData.productSales.map((product, idx) => (
+                         <div key={idx} className="flex justify-between items-center p-3 rounded-2xl hover:bg-orange-50/30 transition-colors">
+                           <div className="flex items-center gap-3">
+                             <span className="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center font-black text-xs">
+                               {idx + 1}
+                             </span>
+                             <div>
+                               <p className="font-bold text-gray-800 uppercase italic text-sm">{product.name}</p>
+                               {product.size && <span className="text-xs bg-gray-200/60 px-2 py-0.5 rounded-md text-gray-900 font-black uppercase tracking-tighter">{product.size}</span>}
+                             </div>
+                           </div>
+                           <div className="text-right">
+                             <p className="font-black text-gray-800 text-sm">{product.quantity} u.</p>
+                             <p className="text-xs text-orange-600 font-black tracking-tighter">S/.{product.total.toFixed(2)}</p>
+                           </div>
+                         </div>
+                       ))
+                     )}
+                   </div>
+                 </div>
 
-                {/* Pedidos Finalizados (Historial) */}
-                <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm flex flex-col">
-                  <div className="mb-4">
-                    <h3 className="text-lg font-black text-gray-800 tracking-tighter uppercase italic">Historial de Ventas</h3>
-                    <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Últimos cobros registrados en caja</p>
-                  </div>
+                 {/* Pedidos Finalizados (Historial) */}
+                 <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm flex flex-col">
+                   <div className="mb-4">
+                     <h3 className="text-lg font-black text-gray-800 tracking-wide uppercase italic">Historial de Ventas</h3>
+                     <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Últimos cobros registrados en caja</p>
+                   </div>
                   <div className="space-y-4 max-h-96 overflow-y-auto custom-scrollbar pr-2 flex-1">
                     {salesData.completedOrders.length === 0 ? (
                       <p className="text-gray-400 text-sm py-10 text-center font-bold uppercase tracking-widest">No hay ventas registradas</p>
