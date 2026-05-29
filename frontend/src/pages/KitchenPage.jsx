@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useStore } from '../store/useStore';
 import api from '../services/api';
 import { Clock, CheckCircle, Flame, AlertCircle, RotateCcw } from 'lucide-react';
@@ -203,6 +203,11 @@ const KitchenPage = () => {
 
   const displayOrders = viewMode === 'QUEUE' ? pendingOrders : dispatchedOrders;
 
+  const pendingOrdersRef = useRef(pendingOrders);
+  useEffect(() => {
+    pendingOrdersRef.current = pendingOrders;
+  }, [pendingOrders]);
+
   // Web Speech API - Voice Control Setup
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -251,7 +256,7 @@ const KitchenPage = () => {
         });
 
         if (foundNum !== null) {
-          const salonPending = pendingOrders.find(o => o.tableNumber === foundNum && !o.toGo);
+          const salonPending = pendingOrdersRef.current.find(o => o.tableNumber === foundNum && !o.toGo);
           if (salonPending) {
             markOrderReady(salonPending.id);
             speak(`Mesa ${foundNum} despachada`);
@@ -264,7 +269,7 @@ const KitchenPage = () => {
 
       // 2. Takeaway Dispatch: "llevar listo" or "para llevar listo" or "llevar despachado"
       if (result.includes('llevar') && (result.includes('listo') || result.includes('despachado') || result.includes('despacha'))) {
-        const toGoPending = pendingOrders.find(o => o.toGo);
+        const toGoPending = pendingOrdersRef.current.find(o => o.toGo);
         if (toGoPending) {
           markOrderReady(toGoPending.id);
           speak('Pedido para llevar despachado');
@@ -286,7 +291,7 @@ const KitchenPage = () => {
           let matchedItem = null;
           let matchedOrder = null;
 
-          for (const order of pendingOrders) {
+          for (const order of pendingOrdersRef.current) {
             const pendingFoodItems = order.items.filter(isFoodItem).filter(i => i.status === 'PENDIENTE');
             for (const item of pendingFoodItems) {
               if (matchFoodNames(item.name, spokenFood)) {
@@ -328,7 +333,7 @@ const KitchenPage = () => {
     return () => {
       recognition.abort();
     };
-  }, [isListening, pendingOrders]);
+  }, [isListening]);
 
   return (
     <div className="min-h-[calc(100vh-140px)] animate-in fade-in duration-700">
