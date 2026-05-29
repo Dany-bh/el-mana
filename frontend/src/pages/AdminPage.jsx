@@ -901,38 +901,39 @@ const LiveMonitor = ({ setConfirmAction }) => {
 
   return (
     <div className="flex-1 flex flex-col lg:flex-row overflow-hidden h-[calc(100vh-140px)] animate-in fade-in duration-500">
-      {/* Selector de Pestañas para Móvil/Tablet (Oculto en Desktop) */}
-      <div className="lg:hidden flex bg-white p-3 gap-2 border-b border-gray-100 shrink-0">
-        <button
-          type="button"
-          onClick={() => setMonitorTab('tables')}
-          className={`flex-1 py-3.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 border cursor-pointer ${
-            monitorTab === 'tables'
-            ? 'bg-orange-600 text-white border-orange-600 shadow-md'
-            : 'bg-white text-gray-500 border-gray-100 hover:bg-gray-50'
-          }`}
-        >
-          <span>🍽️ Mesas ({occupiedTablesCount})</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setMonitorTab('togo')}
-          className={`flex-1 py-3.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 border cursor-pointer ${
-            monitorTab === 'togo'
-            ? 'bg-orange-600 text-white border-orange-600 shadow-md'
-            : 'bg-white text-gray-500 border-gray-100 hover:bg-gray-50'
-          }`}
-        >
-          <span>📦 Llevar ({toGoOrdersCount})</span>
-        </button>
-      </div>
-
-      {/* Panel Principal de Monitoreo (Izquierda - Dividido en tarjetas independientes) */}
-      <div className="flex-1 p-6 md:p-8 overflow-y-auto custom-scrollbar border-r border-gray-100 flex flex-col lg:flex-row gap-6 lg:gap-8 bg-gray-50/50">
+      
+      {/* Panel Principal de Monitoreo (Izquierda) */}
+      <div className="flex-1 p-6 md:p-8 overflow-y-auto custom-scrollbar border-r border-gray-100 flex flex-col gap-6 bg-gray-50/50">
+        
+        {/* Selector de Vista Universal (Local vs Llevar) - Visible en todas las pantallas */}
+        <div className="flex bg-gray-100/90 p-1.5 rounded-[2rem] w-full max-w-xl mx-auto shrink-0 shadow-sm border border-gray-200/40 select-none">
+          <button
+            type="button"
+            onClick={() => setMonitorTab('tables')}
+            className={`flex-1 py-3.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              monitorTab === 'tables'
+              ? 'bg-orange-600 text-white shadow-md shadow-orange-100'
+              : 'text-gray-500 hover:text-gray-800'
+            }`}
+          >
+            <span>🍽️ Consumo en Local ({occupiedTablesCount})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMonitorTab('togo')}
+            className={`flex-1 py-3.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              monitorTab === 'togo'
+              ? 'bg-orange-600 text-white shadow-md shadow-orange-100'
+              : 'text-gray-500 hover:text-gray-800'
+            }`}
+          >
+            <span>📦 Pedidos para Llevar ({toGoOrdersCount})</span>
+          </button>
+        </div>
         
         {/* Tarjeta 1: Mesas del Salón */}
         <div className={`flex-1 bg-white p-6 sm:p-8 rounded-[2.5rem] border border-gray-200/60 shadow-sm flex flex-col min-w-0 ${
-          monitorTab === 'tables' ? 'flex' : 'hidden lg:flex'
+          monitorTab === 'tables' ? 'flex' : 'hidden'
         }`}>
           <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
@@ -1026,8 +1027,8 @@ const LiveMonitor = ({ setConfirmAction }) => {
         </div>
 
         {/* Tarjeta 2: Pedidos para Llevar */}
-        <div className={`w-full lg:w-[340px] xl:w-[380px] bg-white p-6 sm:p-8 rounded-[2.5rem] border border-gray-200/60 shadow-sm flex flex-col shrink-0 ${
-          monitorTab === 'togo' ? 'flex' : 'hidden lg:flex'
+        <div className={`flex-1 bg-white p-6 sm:p-8 rounded-[2.5rem] border border-gray-200/60 shadow-sm flex flex-col min-w-0 ${
+          monitorTab === 'togo' ? 'flex' : 'hidden'
         }`}>
           <div className="mb-6">
             <h3 className="text-xl font-black text-gray-800 uppercase italic tracking-normal flex items-center gap-2">
@@ -1038,13 +1039,13 @@ const LiveMonitor = ({ setConfirmAction }) => {
             </p>
           </div>
 
-          <div className="flex-1 space-y-4 pr-1">
+          <div className="flex-1 mt-2">
             {activeOrders.filter(o => o.toGo).length === 0 ? (
               <div className="bg-gray-50 border border-gray-100 p-8 rounded-[2rem] text-center text-gray-400 font-bold italic text-xs">
                 No hay pedidos para llevar activos
               </div>
             ) : (
-              <div className="flex flex-col gap-4 overflow-y-auto max-h-[50vh] xl:max-h-none pr-2 custom-scrollbar">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 xl:gap-6">
                 {activeOrders.filter(o => o.toGo).map(order => {
                   return (
                     <button
