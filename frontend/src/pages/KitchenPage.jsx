@@ -192,7 +192,7 @@ const OrderCard = ({ order, isHistory = false }) => {
 };
 
 const KitchenPage = () => {
-  const { activeOrders, markOrderReady, markItemReady } = useStore();
+  const { activeOrders, markOrderReady, markItemReady, showNotification } = useStore();
   const [viewMode, setViewMode] = useState('QUEUE'); // 'QUEUE' or 'HISTORY'
   const [confirmAction, setConfirmAction] = useState(null);
   const [isListening, setIsListening] = useState(false);
@@ -386,7 +386,7 @@ const KitchenPage = () => {
                     try {
                       await api.post('/api/admin/clear-kitchen-history');
                     } catch (err) {
-                      alert('Error al limpiar historial');
+                      showNotification('Error', 'Error al limpiar historial', 'ERROR');
                     }
                   }
                 });

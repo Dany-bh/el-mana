@@ -97,6 +97,21 @@ export const useStore = create((set, get) => ({
     }
   },
 
+  showNotification: (title, message, type = 'WARNING') => {
+    playSynthNotification();
+    set((state) => ({
+      notifications: [
+        ...state.notifications,
+        {
+          id: Date.now() + Math.random(),
+          type,
+          title,
+          message
+        }
+      ]
+    }));
+  },
+
   dismissNotification: (id) => set((state) => ({
     notifications: state.notifications.filter(n => n.id !== id)
   })),

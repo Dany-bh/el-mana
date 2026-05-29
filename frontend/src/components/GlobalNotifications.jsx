@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useStore } from '../store/useStore';
-import { Bell, Utensils, Clock, Trash2, Info, X } from 'lucide-react';
+import { Bell, Utensils, Clock, Trash2, Info, X, AlertTriangle, AlertCircle, CheckCircle } from 'lucide-react';
 
 const NotificationToast = ({ notif, onDismiss }) => {
   const duration = notif.type === 'ADMIN_BROADCAST' ? 12000 : 8000; // 12s for admin warnings, 8s for kitchen ready
@@ -20,6 +20,7 @@ const NotificationToast = ({ notif, onDismiss }) => {
   let label = 'Plato Listo';
   let titleText = '';
   let descText = '';
+  let closeButtonClass = 'text-slate-400 hover:text-slate-700 hover:bg-slate-100';
 
   if (notif.type === 'ITEM_READY') {
     bgClass = 'bg-slate-900/98 border-emerald-500/40 text-white shadow-emerald-950/20';
@@ -29,6 +30,7 @@ const NotificationToast = ({ notif, onDismiss }) => {
     label = '¡Plato Listo!';
     titleText = `Mesa ${notif.tableNumber} • Piso ${notif.floor || 1}`;
     descText = notif.itemName || 'Un plato está listo para entregar';
+    closeButtonClass = 'text-white/50 hover:text-white hover:bg-white/10';
   } else if (notif.type === 'ORDER_READY') {
     bgClass = 'bg-slate-900/98 border-blue-500/40 text-white shadow-blue-950/20';
     iconClass = 'bg-blue-500 text-white animate-pulse';
@@ -37,7 +39,9 @@ const NotificationToast = ({ notif, onDismiss }) => {
     label = '¡Pedido Despachado!';
     titleText = `Mesa ${notif.tableNumber} • Piso ${notif.floor || 1}`;
     descText = '¡Toda la comanda está lista para retirar!';
+    closeButtonClass = 'text-white/50 hover:text-white hover:bg-white/10';
   } else if (notif.type === 'ADMIN_BROADCAST') {
+    closeButtonClass = 'text-white/50 hover:text-white hover:bg-white/10';
     if (notif.broadcastType === 'RESET_DAILY') {
       bgClass = 'bg-amber-950/98 border-amber-500/40 text-amber-50 shadow-amber-950/40';
       iconClass = 'bg-amber-500 text-amber-950';
@@ -48,7 +52,7 @@ const NotificationToast = ({ notif, onDismiss }) => {
     } else if (notif.broadcastType === 'PURGE_ALL') {
       bgClass = 'bg-red-950/98 border-red-500/40 text-red-50 shadow-red-950/40';
       iconClass = 'bg-red-500 text-red-950 animate-pulse';
-      progressBg = 'bg-red-500';
+      progressBg = 'bg-red-505';
       Icon = Trash2;
       label = notif.title || 'Sistema Purgado';
       descText = notif.message;
@@ -60,6 +64,33 @@ const NotificationToast = ({ notif, onDismiss }) => {
       label = notif.title || 'Aviso del Sistema';
       descText = notif.message;
     }
+  } else if (notif.type === 'WARNING') {
+    bgClass = 'bg-white/95 border-amber-500/30 text-gray-800 shadow-amber-100/50';
+    iconClass = 'bg-amber-500 text-white animate-bounce';
+    progressBg = 'bg-amber-500';
+    Icon = AlertTriangle;
+    label = 'Advertencia';
+    titleText = notif.title || 'Atención';
+    descText = notif.message;
+    closeButtonClass = 'text-slate-400 hover:text-slate-700 hover:bg-slate-100';
+  } else if (notif.type === 'ERROR') {
+    bgClass = 'bg-white/95 border-red-500/30 text-gray-800 shadow-red-100/50';
+    iconClass = 'bg-red-500 text-white animate-pulse';
+    progressBg = 'bg-red-500';
+    Icon = AlertCircle;
+    label = 'Error';
+    titleText = notif.title || 'Error en la Operación';
+    descText = notif.message;
+    closeButtonClass = 'text-slate-400 hover:text-slate-700 hover:bg-slate-100';
+  } else if (notif.type === 'SUCCESS') {
+    bgClass = 'bg-white/95 border-emerald-500/30 text-gray-800 shadow-emerald-100/50';
+    iconClass = 'bg-emerald-500 text-white';
+    progressBg = 'bg-emerald-500';
+    Icon = CheckCircle;
+    label = 'Éxito';
+    titleText = notif.title || 'Operación Completada';
+    descText = notif.message;
+    closeButtonClass = 'text-slate-400 hover:text-slate-700 hover:bg-slate-100';
   }
 
   return (
@@ -85,13 +116,13 @@ const NotificationToast = ({ notif, onDismiss }) => {
 
       <button 
         onClick={() => onDismiss(notif.id)}
-        className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10 cursor-pointer"
+        className={`absolute top-4 right-4 transition-colors p-1 rounded-lg cursor-pointer ${closeButtonClass}`}
       >
         <X size={16} strokeWidth={3} />
       </button>
 
       {/* Progress Bar indicator */}
-      <div className="absolute bottom-0 left-5 right-5 h-1 bg-white/15 rounded-full overflow-hidden">
+      <div className="absolute bottom-0 left-5 right-5 h-1 bg-black/5 rounded-full overflow-hidden">
         <div 
           className={`h-full rounded-full ${progressBg} animate-shrink-width`}
           style={{ animationDuration: `${duration}ms` }}

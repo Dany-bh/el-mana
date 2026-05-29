@@ -52,6 +52,7 @@ const TableTimer = ({ createdAt, isFinished = false, updatedAt = null }) => {
 };
 
 const AdminPage = () => {
+  const showNotification = useStore((state) => state.showNotification);
   const [activeTab, setActiveTab] = useState('live');
   const [selectedPastOrder, setSelectedPastOrder] = useState(null);
   const [expandedCategoryId, setExpandedCategoryId] = useState(null);
@@ -106,7 +107,7 @@ const AdminPage = () => {
         const normalizedNewName = submitData.name?.trim().replace(/\s+/g, ' ').toLowerCase();
         const duplicate = data.find(p => p.name?.trim().replace(/\s+/g, ' ').toLowerCase() === normalizedNewName && (!editingItem || p.id !== editingItem.id));
         if (duplicate) {
-          alert("Ya existe un producto con este nombre en el menú.");
+          showNotification("Producto Duplicado", "Ya existe un producto con este nombre en el menú.", "WARNING");
           return;
         }
       }
@@ -115,7 +116,7 @@ const AdminPage = () => {
         const normalizedNewName = submitData.name?.trim().replace(/\s+/g, ' ').toLowerCase();
         const duplicate = data.find(c => c.name?.trim().replace(/\s+/g, ' ').toLowerCase() === normalizedNewName && (!editingItem || c.id !== editingItem.id));
         if (duplicate) {
-          alert("Ya existe una categoría con este nombre.");
+          showNotification("Categoría Duplicada", "Ya existe una categoría con este nombre.", "WARNING");
           return;
         }
       }
@@ -144,7 +145,7 @@ const AdminPage = () => {
       }
     } catch (error) {
       const errMsg = error.response?.data?.error || "Error al guardar datos";
-      alert(errMsg);
+      showNotification("Error", errMsg, "ERROR");
     }
   };
 
@@ -163,7 +164,7 @@ const AdminPage = () => {
         } catch (error) {
           console.error("Delete error:", error);
           const msg = error.response?.data?.error || "No se pudo eliminar el elemento. Asegúrate de que no tenga otros elementos asociados (como productos o pedidos).";
-          alert(msg);
+          showNotification("Error de Eliminación", msg, "ERROR");
         }
       }
     });
@@ -181,7 +182,7 @@ const AdminPage = () => {
           fetchData();
         } catch (error) {
           console.error("Delete error:", error);
-          alert(error.response?.data?.error || "Error al eliminar producto");
+          showNotification("Error de Eliminación", error.response?.data?.error || "Error al eliminar producto", "ERROR");
         }
       }
     });
@@ -271,7 +272,7 @@ const AdminPage = () => {
                         await api.post(`/api/admin/reset-daily`);
                         await fetchData();
                       } catch (err) {
-                        alert('Error al reiniciar caja');
+                        showNotification("Error de Caja", "Error al reiniciar caja", "ERROR");
                       }
                     }
                   })}
@@ -289,7 +290,7 @@ const AdminPage = () => {
                         await api.post(`/api/admin/purge-all-history`);
                         await fetchData();
                       } catch (err) {
-                        alert('Error al eliminar historial');
+                        showNotification("Error del Sistema", "Error al eliminar historial", "ERROR");
                       }
                     }
                   })}
@@ -854,7 +855,7 @@ const AdminPage = () => {
 };
 
 const LiveMonitor = ({ setConfirmAction }) => {
-  const { tables, activeOrders, checkoutTable } = useStore();
+  const { tables, activeOrders, checkoutTable, showNotification } = useStore();
   const [selectedTable, setSelectedTable] = useState(null);
   const [selectedFloor, setSelectedFloor] = useState(1);
   
@@ -951,7 +952,7 @@ const LiveMonitor = ({ setConfirmAction }) => {
       setPrintSuccess(true);
       setTimeout(() => setPrintSuccess(false), 4000);
     } catch (err) {
-      alert("Error al enviar a la impresora POS");
+      showNotification("Error de Impresión", "Error al enviar a la impresora POS", "ERROR");
     } finally {
       setPrintLoading(false);
     }
@@ -1560,7 +1561,7 @@ const LiveMonitor = ({ setConfirmAction }) => {
                 onClick={() => {
                   localStorage.setItem('el_mana_apis_token', savedToken);
                   setIsTokenModalOpen(false);
-                  alert("¡Token guardado exitosamente! Ahora las consultas se realizarán con tus credenciales.");
+                  showNotification("Configuración Guardada", "¡Token guardado exitosamente! Ahora las consultas se realizarán con tus credenciales.", "SUCCESS");
                 }}
                 className="flex-1 bg-orange-600 text-white font-black py-4 rounded-2xl text-xs shadow-lg hover:bg-orange-500 transition-all uppercase tracking-widest cursor-pointer active:scale-95"
               >
