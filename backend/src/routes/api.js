@@ -308,25 +308,65 @@ router.get('/reniec-sunat/lookup', async (req, res) => {
   const token = req.query.token || process.env.APIS_TOKEN;
 
   if (token) {
+    const cleanToken = token.trim();
     try {
       let url = '';
-      if (type === 'DNI') {
-        url = `https://api.apis.net.pe/v2/reniec/dni?numero=${number}`;
-      } else if (type === 'RUC') {
-        url = `https://api.apis.net.pe/v2/sunat/ruc?numero=${number}`;
+      // Si el token es de la versión 1 (comienza con "sk_" o no contiene "apis-token-")
+      const isV1 = cleanToken.startsWith('sk_') || !cleanToken.startsWith('apis-token-');
+
+      if (isV1) {
+        if (type === 'DNI') {
+          url = `https://api.apis.net.pe/v1/dni?numero=${number}`;
+        } else if (type === 'RUC') {
+          url = `https://api.apis.net.pe/v1/ruc?numero=${number}`;
+        }
+      } else {
+        if (type === 'DNI') {
+          url = `https://api.apis.net.pe/v2/reniec/dni?numero=${number}`;
+        } else if (type === 'RUC') {
+          url = `https://api.apis.net.pe/v2/sunat/ruc?numero=${number}`;
+        }
       }
 
+      console.log(`[RENIEC/SUNAT API] Consultando URL: ${url} usando token v${isV1 ? '1' : '2'}`);
       const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${cleanToken}`
         }
       });
 
       if (response.ok) {
-        const data = await response.json();
+        let data = await response.json();
+        // Si usamos v1 para RUC, aseguramos que razonSocial exista para el frontend
+        if (isV1 && type === 'RUC' && data.nombre && !data.razonSocial) {
+          data.razonSocial = data.nombre;
+        }
         return res.json(data);
+      } else {
+        console.warn(`[RENIEC/SUNAT API] Falló consulta v${isV1 ? '1' : '2'} (Status: ${response.status}). Probando versión alternativa...`);
+        
+        // Reintento con versión alternativa por si acaso
+        const altUrl = isV1 
+          ? (type === 'DNI' ? `https://api.apis.net.pe/v2/reniec/dni?numero=${number}` : `https://api.apis.net.pe/v2/sunat/ruc?numero=${number}`)
+          : (type === 'DNI' ? `https://api.apis.net.pe/v1/dni?numero=${number}` : `https://api.apis.net.pe/v1/ruc?numero=${number}`);
+          
+        const altResponse = await fetch(altUrl, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${cleanToken}`
+          }
+        });
+
+        if (altResponse.ok) {
+          let altData = await altResponse.json();
+          if (!isV1 && type === 'RUC' && altData.nombre && !altData.razonSocial) {
+            altData.razonSocial = altData.nombre;
+          }
+          return res.json(altData);
+        }
       }
     } catch (err) {
       console.error('[RENIEC/SUNAT API] Error con token externo:', err);
