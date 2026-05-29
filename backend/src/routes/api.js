@@ -343,9 +343,9 @@ router.get('/reniec-sunat/lookup', async (req, res) => {
     // Si es el DNI específico de Dany Burgos, devolvemos su nombre real para que se sienta personalizado!
     if (number === '76637613') {
       return res.json({
-        nombres: "DANY JUNIOR",
+        nombres: "DANY ALEXANDER",
         apellidoPaterno: "BURGOS",
-        apellidoMaterno: "RODRIGUEZ",
+        apellidoMaterno: "HUANCA",
         numeroDocumento: number,
         isDemo: true
       });
@@ -367,7 +367,7 @@ router.get('/reniec-sunat/lookup', async (req, res) => {
     // RUC
     if (number.startsWith('1076637613')) {
       return res.json({
-        razonSocial: "DANY JUNIOR BURGOS RODRIGUEZ",
+        razonSocial: "DANY ALEXANDER BURGOS HUANCA",
         numeroDocumento: number,
         estado: "ACTIVO",
         condicion: "HABIDO",
