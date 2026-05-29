@@ -100,6 +100,26 @@ const AdminPage = () => {
     e.preventDefault();
     try {
       const submitData = { ...formData };
+      
+      // Client-side duplicate check
+      if (editingType === 'products') {
+        const trimmedName = submitData.name?.trim().toLowerCase();
+        const duplicate = data.find(p => p.name?.trim().toLowerCase() === trimmedName && (!editingItem || p.id !== editingItem.id));
+        if (duplicate) {
+          alert("Ya existe un producto con este nombre en el menú.");
+          return;
+        }
+      }
+      
+      if (editingType === 'categories') {
+        const trimmedName = submitData.name?.trim().toLowerCase();
+        const duplicate = data.find(c => c.name?.trim().toLowerCase() === trimmedName && (!editingItem || c.id !== editingItem.id));
+        if (duplicate) {
+          alert("Ya existe una categoría con este nombre.");
+          return;
+        }
+      }
+
       if (editingType === 'products' && !submitData.categoryId) {
         submitData.categoryId = categories[0]?.id || '';
       }
@@ -115,7 +135,8 @@ const AdminPage = () => {
         fetchCategories();
       }
     } catch (error) {
-      alert("Error al guardar datos");
+      const errMsg = error.response?.data?.error || "Error al guardar datos";
+      alert(errMsg);
     }
   };
 

@@ -27,6 +27,20 @@ router.get('/categories', async (req, res) => {
 
 router.post('/categories', async (req, res) => {
   try {
+    const { name } = req.body;
+    if (name) {
+      const existing = await prisma.category.findFirst({
+        where: {
+          name: {
+            equals: name.trim(),
+            mode: 'insensitive'
+          }
+        }
+      });
+      if (existing) {
+        return res.status(400).json({ error: 'Ya existe una categoría con este nombre.' });
+      }
+    }
     const category = await prisma.category.create({ data: sanitize(req.body) });
     res.json(category);
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -34,6 +48,23 @@ router.post('/categories', async (req, res) => {
 
 router.put('/categories/:id', async (req, res) => {
   try {
+    const { name } = req.body;
+    if (name) {
+      const existing = await prisma.category.findFirst({
+        where: {
+          name: {
+            equals: name.trim(),
+            mode: 'insensitive'
+          },
+          id: {
+            not: req.params.id
+          }
+        }
+      });
+      if (existing) {
+        return res.status(400).json({ error: 'Ya existe otra categoría con este nombre.' });
+      }
+    }
     const category = await prisma.category.update({
       where: { id: req.params.id },
       data: sanitize(req.body)
@@ -68,6 +99,20 @@ router.get('/products', async (req, res) => {
 
 router.post('/products', async (req, res) => {
   try {
+    const { name } = req.body;
+    if (name) {
+      const existing = await prisma.product.findFirst({
+        where: {
+          name: {
+            equals: name.trim(),
+            mode: 'insensitive'
+          }
+        }
+      });
+      if (existing) {
+        return res.status(400).json({ error: 'Ya existe un producto con este nombre en el menú.' });
+      }
+    }
     const product = await prisma.product.create({ data: sanitize(req.body) });
     res.json(product);
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -75,6 +120,23 @@ router.post('/products', async (req, res) => {
 
 router.put('/products/:id', async (req, res) => {
   try {
+    const { name } = req.body;
+    if (name) {
+      const existing = await prisma.product.findFirst({
+        where: {
+          name: {
+            equals: name.trim(),
+            mode: 'insensitive'
+          },
+          id: {
+            not: req.params.id
+          }
+        }
+      });
+      if (existing) {
+        return res.status(400).json({ error: 'Ya existe otro producto con este nombre en el menú.' });
+      }
+    }
     const product = await prisma.product.update({
       where: { id: req.params.id },
       data: sanitize(req.body)
