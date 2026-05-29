@@ -77,6 +77,8 @@ const WaiterPage = () => {
   const [selectedOption, setSelectedOption] = useState('');
   const [customProductNotes, setCustomProductNotes] = useState('');
   const [orderToGo, setOrderToGo] = useState(false);
+  const [mobileTab, setMobileTab] = useState('MENU'); // 'MENU' | 'CART'
+
 
   const getQuickNoteOptions = (productName) => {
     const name = productName.toLowerCase();
@@ -414,7 +416,38 @@ const WaiterPage = () => {
         </div>
       ) : (
         <div className="flex flex-col lg:flex-row gap-6 h-auto lg:h-[calc(100vh-140px)] animate-in fade-in slide-in-from-right-4 duration-500 relative">
-          <div className="flex-1 flex flex-col min-w-0 lg:h-full">
+          {/* Selector de Pestañas Móvil */}
+          <div className="lg:hidden flex bg-gray-100 p-1.5 rounded-2xl border border-gray-200/50 mb-1 w-full shrink-0">
+            <button 
+              type="button"
+              onClick={() => setMobileTab('MENU')}
+              className={`flex-1 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                mobileTab === 'MENU' 
+                ? 'bg-white text-orange-600 shadow-sm border border-gray-150 font-black' 
+                : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              🍽️ Carta
+            </button>
+            <button 
+              type="button"
+              onClick={() => setMobileTab('CART')}
+              className={`flex-1 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center gap-2 relative ${
+                mobileTab === 'CART' 
+                ? 'bg-white text-orange-600 shadow-sm border border-gray-150 font-black' 
+                : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              🛒 Tu Pedido
+              {currentOrder.length > 0 && (
+                <span className="bg-orange-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full animate-bounce shrink-0">
+                  {currentOrder.length}
+                </span>
+              )}
+            </button>
+          </div>
+
+          <div className={`flex-1 flex flex-col min-w-0 lg:h-full ${mobileTab === 'MENU' ? 'flex' : 'hidden lg:flex'}`}>
             {viewMode === 'MENU' ? (
               <>
                 <div className="mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
@@ -592,7 +625,7 @@ const WaiterPage = () => {
             )}
           </div>
 
-          <div className="w-full lg:w-96 bg-white rounded-[2.5rem] shadow-xl border border-gray-100 flex flex-col overflow-hidden lg:h-full shrink-0">
+          <div className={`w-full lg:w-96 bg-white rounded-[2.5rem] shadow-xl border border-gray-100 flex flex-col overflow-hidden lg:h-full shrink-0 ${mobileTab === 'CART' ? 'flex' : 'hidden lg:flex'}`}>
             <div className="p-4 sm:p-5 bg-gray-50/50 border-b border-gray-100 flex justify-between items-center">
               <h3 className="text-xl font-black text-gray-800 tracking-tighter uppercase italic">Tu Pedido</h3>
               <div className="bg-orange-600 text-white text-xs font-black px-3 py-1 rounded-full">

@@ -197,6 +197,8 @@ const KitchenPage = () => {
   const [confirmAction, setConfirmAction] = useState(null);
   const [isListening, setIsListening] = useState(false);
   const [lastSpoken, setLastSpoken] = useState('');
+  const [mobileTab, setMobileTab] = useState('LOCAL'); // 'LOCAL' | 'LLEVAR'
+
 
   const pendingOrders = activeOrders.filter(o => o.status === 'PENDIENTE' && o.items.some(isFoodItem));
   const dispatchedOrders = activeOrders.filter(o => o.status === 'LISTO' && o.items.some(isFoodItem));
@@ -432,28 +434,55 @@ const KitchenPage = () => {
           </p>
         </div>
       ) : viewMode === 'QUEUE' ? (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-          {/* Columna Local (Mesas) */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-3 border border-emerald-200 bg-emerald-50/70 p-4 rounded-[2rem] shadow-sm shadow-emerald-50/20">
-              <span className="text-2xl">🍽️</span>
-              <h3 className="text-lg font-black text-emerald-800 uppercase italic tracking-wider">Consumo en Local ({pendingOrders.filter(o => !o.toGo).length})</h3>
-            </div>
-            {pendingOrders.filter(o => !o.toGo).length === 0 ? (
-              <div className="bg-[#1a1d23]/40 border-2 border-dashed border-[#2d323a] p-12 rounded-[2rem] text-center text-gray-500 font-bold italic">
-                No hay pedidos de local pendientes
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
-                {pendingOrders.filter(o => !o.toGo).map(order => (
-                  <OrderCard key={order.id} order={order} isHistory={false} />
-                ))}
-              </div>
-            )}
+        <div className="flex flex-col gap-6 w-full">
+          {/* Selector de Pestañas Móvil en Cocina */}
+          <div className="xl:hidden flex bg-[#1a1d23] border border-[#2d323a] p-1.5 rounded-[1.8rem] shrink-0">
+            <button 
+              type="button"
+              onClick={() => setMobileTab('LOCAL')}
+              className={`flex-1 py-3.5 rounded-[1.2rem] text-xs font-black uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                mobileTab === 'LOCAL' 
+                ? 'bg-orange-600 text-white shadow-md font-black' 
+                : 'text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              🍽️ Local ({pendingOrders.filter(o => !o.toGo).length})
+            </button>
+            <button 
+              type="button"
+              onClick={() => setMobileTab('LLEVAR')}
+              className={`flex-1 py-3.5 rounded-[1.2rem] text-xs font-black uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                mobileTab === 'LLEVAR' 
+                ? 'bg-orange-600 text-white shadow-md font-black' 
+                : 'text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              📦 Llevar ({pendingOrders.filter(o => o.toGo).length})
+            </button>
           </div>
 
-          {/* Columna Para Llevar (Llevar) */}
-          <div className="space-y-6">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            {/* Columna Local (Mesas) */}
+            <div className={`space-y-6 ${mobileTab === 'LOCAL' ? 'block' : 'hidden xl:block'}`}>
+              <div className="flex items-center gap-3 border border-emerald-200 bg-emerald-50/70 p-4 rounded-[2rem] shadow-sm shadow-emerald-50/20">
+                <span className="text-2xl">🍽️</span>
+                <h3 className="text-lg font-black text-emerald-800 uppercase italic tracking-wider">Consumo en Local ({pendingOrders.filter(o => !o.toGo).length})</h3>
+              </div>
+              {pendingOrders.filter(o => !o.toGo).length === 0 ? (
+                <div className="bg-[#1a1d23]/40 border-2 border-dashed border-[#2d323a] p-12 rounded-[2rem] text-center text-gray-500 font-bold italic">
+                  No hay pedidos de local pendientes
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
+                  {pendingOrders.filter(o => !o.toGo).map(order => (
+                    <OrderCard key={order.id} order={order} isHistory={false} />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Columna Para Llevar (Llevar) */}
+            <div className={`space-y-6 ${mobileTab === 'LLEVAR' ? 'block' : 'hidden xl:block'}`}>
             <div className="flex items-center gap-3 border border-orange-200 bg-orange-50/70 p-4 rounded-[2rem] shadow-sm shadow-orange-50/20">
               <span className="text-2xl">📦</span>
               <h3 className="text-lg font-black text-orange-800 uppercase italic tracking-wider">Pedidos Para Llevar ({pendingOrders.filter(o => o.toGo).length})</h3>
@@ -471,6 +500,7 @@ const KitchenPage = () => {
             )}
           </div>
         </div>
+      </div>
       ) : (
         /* Historial */
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-8">
