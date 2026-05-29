@@ -303,8 +303,8 @@ const AdminPage = () => {
                 </div>
               </div>
 
-              {/* Detalle en dos columnas */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Detalle en secciones separadas verticalmente */}
+              <div className="grid grid-cols-1 gap-10">
                 {/* Ranking de Productos */}
                 <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm flex flex-col">
                   <div className="mb-4">
