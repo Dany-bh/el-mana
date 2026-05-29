@@ -865,6 +865,8 @@ const LiveMonitor = ({ setConfirmAction }) => {
         } finally {
           setDocLoading(false);
         }
+      } else {
+        setCustomerName('');
       }
     };
     
