@@ -257,15 +257,20 @@ async function scrapeDni(dni) {
       const resultHtml = await postResponse.text();
       const tds = resultHtml.match(/<td>([^<]+)<\/td>/g);
       if (tds && tds.length >= 4) {
-        const nombres = tds[1].replace(/<\/?td>/g, '').trim();
-        const paterno = tds[2].replace(/<\/?td>/g, '').trim();
-        const materno = tds[3].replace(/<\/?td>/g, '').trim();
-        return {
-          nombres,
-          apellidoPaterno: paterno,
-          apellidoMaterno: materno,
-          numeroDocumento: dni
-        };
+        const matchedDni = tds[0].replace(/<\/?td>/g, '').trim();
+        if (matchedDni === dni) {
+          const nombres = tds[1].replace(/<\/?td>/g, '').trim();
+          const paterno = tds[2].replace(/<\/?td>/g, '').trim();
+          const materno = tds[3].replace(/<\/?td>/g, '').trim();
+          return {
+            nombres,
+            apellidoPaterno: paterno,
+            apellidoMaterno: materno,
+            numeroDocumento: dni
+          };
+        } else {
+          console.warn(`[scrapeDni] DNI mismatch: expected ${dni}, got ${matchedDni}`);
+        }
       }
     }
   } catch (err) {
@@ -281,30 +286,7 @@ router.get('/reniec-sunat/lookup', async (req, res) => {
     return res.status(400).json({ error: 'Número de documento requerido.' });
   }
 
-  // Si es RUC 10 (Persona Natural con negocio), podemos extraer el DNI y usar el scraper de DNI de forma 100% gratuita
-  if (type === 'RUC' && number.startsWith('10') && number.length === 11) {
-    const extractedDni = number.substring(2, 10);
-    const scraped = await scrapeDni(extractedDni);
-    if (scraped) {
-      const fullName = `${scraped.nombres} ${scraped.apellidoPaterno} ${scraped.apellidoMaterno}`;
-      return res.json({
-        razonSocial: fullName,
-        numeroDocumento: number,
-        estado: "ACTIVO",
-        condicion: "HABIDO"
-      });
-    }
-  }
-
-  // Si es DNI, intentamos primero con el scraper público 100% gratuito sin token
-  if (type === 'DNI') {
-    const scraped = await scrapeDni(number);
-    if (scraped) {
-      return res.json(scraped);
-    }
-  }
-
-  // Si el scraper falla o es RUC 20, intentamos usar el token enviado desde el cliente o de las variables de entorno
+  // 1. PRIORIDAD: Si hay un token de apis.net.pe provisto (del cliente o variable de entorno), se usa de inmediato.
   const token = req.query.token || process.env.APIS_TOKEN;
 
   if (token) {
@@ -373,7 +355,32 @@ router.get('/reniec-sunat/lookup', async (req, res) => {
     }
   }
 
-  // Fallback de contingencia exclusivo para el DNI del dueño (Dany)
+  // 2. CONTINGENCIA / FALLBACK: Si no hay token o la consulta al token falló, usamos el scraper público gratuito.
+  
+  // Si es RUC 10 (Persona Natural con negocio), extraemos DNI y usamos scraper de DNI de forma gratuita
+  if (type === 'RUC' && number.startsWith('10') && number.length === 11) {
+    const extractedDni = number.substring(2, 10);
+    const scraped = await scrapeDni(extractedDni);
+    if (scraped) {
+      const fullName = `${scraped.nombres} ${scraped.apellidoPaterno} ${scraped.apellidoMaterno}`;
+      return res.json({
+        razonSocial: fullName,
+        numeroDocumento: number,
+        estado: "ACTIVO",
+        condicion: "HABIDO"
+      });
+    }
+  }
+
+  // Si es DNI, intentamos con el scraper público gratuito
+  if (type === 'DNI') {
+    const scraped = await scrapeDni(number);
+    if (scraped) {
+      return res.json(scraped);
+    }
+  }
+
+  // 3. FALLBACK FINAL: Contingencia exclusiva para el DNI del dueño (Dany)
   if (type === 'DNI' && number === '76637613') {
     return res.json({
       nombres: "DANY ALEXANDER",
