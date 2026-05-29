@@ -373,63 +373,32 @@ router.get('/reniec-sunat/lookup', async (req, res) => {
     }
   }
 
-  // Fallback si no hay token o la consulta falló por completo
-  console.warn(`[RENIEC/SUNAT] Usando simulación de demostración dinámica para el fallback.`);
-  
-  const NOMBRES_MOCK = ["JUAN", "MARIA", "CARLOS", "ANA", "LUIS", "ROSA", "JORGE", "ELIZABETH", "PEDRO", "CARMEN", "DANIEL", "GLADYS", "JOSE", "PATRICIA", "MANUEL", "TERESA"];
-  const APELLIDOS_MOCK = ["QUISPE", "FLORES", "SANCHEZ", "RODRIGUEZ", "GARCIA", "ROJAS", "DIAZ", "TORRES", "LOPEZ", "GONZALES", "RAMIREZ", "MENDOZA", "CHAVEZ", "ESPINOSA", "CASTILLO", "HUAMAN"];
-
-  if (type === 'DNI') {
-    // Si es el DNI específico de Dany Burgos, devolvemos su nombre real para que se sienta personalizado!
-    if (number === '76637613') {
-      return res.json({
-        nombres: "DANY ALEXANDER",
-        apellidoPaterno: "BURGOS",
-        apellidoMaterno: "HUANCA",
-        numeroDocumento: number,
-        isDemo: true
-      });
-    }
-
-    const sum = number.split('').reduce((acc, digit) => acc + (parseInt(digit) || 0), 0);
-    const nameIndex = sum % NOMBRES_MOCK.length;
-    const pIndex = (sum + 3) % APELLIDOS_MOCK.length;
-    const mIndex = (sum + 7) % APELLIDOS_MOCK.length;
-
+  // Fallback de contingencia exclusivo para el DNI del dueño (Dany)
+  if (type === 'DNI' && number === '76637613') {
     return res.json({
-      nombres: NOMBRES_MOCK[nameIndex],
-      apellidoPaterno: APELLIDOS_MOCK[pIndex],
-      apellidoMaterno: APELLIDOS_MOCK[mIndex],
+      nombres: "DANY ALEXANDER",
+      apellidoPaterno: "BURGOS",
+      apellidoMaterno: "HUANCA",
       numeroDocumento: number,
       isDemo: true
     });
-  } else {
-    // RUC
-    if (number.startsWith('1076637613')) {
-      return res.json({
-        razonSocial: "DANY ALEXANDER BURGOS HUANCA",
-        numeroDocumento: number,
-        estado: "ACTIVO",
-        condicion: "HABIDO",
-        isDemo: true
-      });
-    }
-
-    const sum = number.split('').reduce((acc, digit) => acc + (parseInt(digit) || 0), 0);
-    const APELLIDOS = ["INVERSIONES", "DISTRIBUIDORA", "SERVICIOS MULTIPLES", "CONSTRUCTORA", "CORPORACION", "NEGOCIOS"];
-    const GIROS = ["ALIMENTOS & BEBIDAS", "DE CHICLAYO", "EL MANÁ Y SU SAZÓN", "DE NORTE E.I.R.L.", "DELICIAS", "BUR BUR"];
-    
-    const index1 = sum % APELLIDOS.length;
-    const index2 = (sum + 5) % GIROS.length;
-
+  }
+  if (type === 'RUC' && number.startsWith('1076637613')) {
     return res.json({
-      razonSocial: `${APELLIDOS[index1]} ${GIROS[index2]} S.A.C.`,
+      razonSocial: "DANY ALEXANDER BURGOS HUANCA",
       numeroDocumento: number,
       estado: "ACTIVO",
       condicion: "HABIDO",
       isDemo: true
     });
   }
+
+  // Para cualquier otro documento, si falló la API, NO devolvemos datos falsos.
+  // Devolvemos un error 404 para que la caja quede limpia y el cajero pueda escribir el nombre de forma manual.
+  console.warn(`[RENIEC/SUNAT] Consulta fallida o no autorizada para el documento ${number}. No se devolverán datos simulados.`);
+  return res.status(404).json({ 
+    error: 'No se pudo obtener los datos reales. Por favor, ingrese el nombre de forma manual.' 
+  });
 });
 
 export default router;
