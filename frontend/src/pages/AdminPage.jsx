@@ -831,6 +831,42 @@ const LiveMonitor = ({ setConfirmAction }) => {
   const [printLoading, setPrintLoading] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [monitorTab, setMonitorTab] = useState('tables'); // 'tables' | 'togo'
+  const [docLoading, setDocLoading] = useState(false);
+
+  // Auto-fetch DNI (RENIEC) or RUC (SUNAT) when length is 8 or 11
+  useEffect(() => {
+    const fetchDocData = async () => {
+      const isRuc = invoiceType === 'FACTURA';
+      const expectedLength = isRuc ? 11 : 8;
+      
+      if (docNumber && docNumber.length === expectedLength) {
+        setDocLoading(true);
+        try {
+          const res = await api.get('/api/reniec-sunat/lookup', {
+            params: {
+              type: isRuc ? 'RUC' : 'DNI',
+              number: docNumber
+            }
+          });
+          
+          if (res.data) {
+            if (isRuc && res.data.razonSocial) {
+              setCustomerName(res.data.razonSocial);
+            } else if (!isRuc && res.data.nombres) {
+              const fullName = `${res.data.nombres} ${res.data.apellidoPaterno || ''} ${res.data.apellidoMaterno || ''}`.trim();
+              setCustomerName(fullName);
+            }
+          }
+        } catch (err) {
+          console.error("Error al consultar DNI/RUC:", err);
+        } finally {
+          setDocLoading(false);
+        }
+      }
+    };
+    
+    fetchDocData();
+  }, [docNumber, invoiceType]);
 
   const toGoOrdersCount = activeOrders.filter(o => o.toGo).length;
   const occupiedTablesCount = tables.filter(t => t.number !== 0).filter(table => 
@@ -1195,9 +1231,16 @@ const LiveMonitor = ({ setConfirmAction }) => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-black text-gray-800 uppercase tracking-widest mb-1.5 px-1">
-                    {invoiceType === 'FACTURA' ? 'R.U.C. (11 díg)' : 'D.N.I. (8 díg)'}
-                  </label>
+                  <div className="flex justify-between items-center mb-1.5 px-1">
+                    <label className="block text-xs font-black text-gray-800 uppercase tracking-widest leading-none">
+                      {invoiceType === 'FACTURA' ? 'R.U.C. (11 díg)' : 'D.N.I. (8 díg)'}
+                    </label>
+                    {docLoading && (
+                      <span className="text-[8px] text-orange-600 font-extrabold uppercase tracking-widest animate-pulse flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-orange-600 animate-ping inline-block" /> Buscando...
+                      </span>
+                    )}
+                  </div>
                   <input 
                     type="text" 
                     maxLength={invoiceType === 'FACTURA' ? 11 : 8}
@@ -1343,9 +1386,16 @@ const LiveMonitor = ({ setConfirmAction }) => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-black text-gray-800 uppercase tracking-widest mb-1.5 px-1">
-                      {invoiceType === 'FACTURA' ? 'R.U.C. (11 díg)' : 'D.N.I. (8 díg)'}
-                    </label>
+                    <div className="flex justify-between items-center mb-1.5 px-1">
+                      <label className="block text-xs font-black text-gray-800 uppercase tracking-widest leading-none">
+                        {invoiceType === 'FACTURA' ? 'R.U.C. (11 díg)' : 'D.N.I. (8 díg)'}
+                      </label>
+                      {docLoading && (
+                        <span className="text-[8px] text-orange-600 font-extrabold uppercase tracking-widest animate-pulse flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-orange-600 animate-ping inline-block" /> Buscando...
+                        </span>
+                      )}
+                    </div>
                     <input 
                       type="text" 
                       maxLength={invoiceType === 'FACTURA' ? 11 : 8}
