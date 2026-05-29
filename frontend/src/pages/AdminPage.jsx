@@ -830,6 +830,12 @@ const LiveMonitor = ({ setConfirmAction }) => {
   const [printSuccess, setPrintSuccess] = useState(false);
   const [printLoading, setPrintLoading] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [monitorTab, setMonitorTab] = useState('tables'); // 'tables' | 'togo'
+
+  const toGoOrdersCount = activeOrders.filter(o => o.toGo).length;
+  const occupiedTablesCount = tables.filter(t => t.number !== 0).filter(table => 
+    activeOrders.some(o => o.tableId === table.id && o.floor === selectedFloor)
+  ).length;
 
   // Sync selected table's live state
   const liveTable = tables.find(t => t.id === selectedTable?.id);
@@ -895,14 +901,44 @@ const LiveMonitor = ({ setConfirmAction }) => {
 
   return (
     <div className="flex-1 flex flex-col lg:flex-row overflow-hidden h-[calc(100vh-140px)] animate-in fade-in duration-500">
-      {/* Panel Principal de Monitoreo (Izquierda - Dividido en dos columnas al lado) */}
-      <div className="flex-1 p-6 md:p-8 overflow-y-auto custom-scrollbar border-r border-gray-100 flex flex-col md:flex-row gap-6 xl:gap-8 bg-gray-50/10">
+      {/* Selector de Pestañas para Móvil/Tablet (Oculto en Desktop) */}
+      <div className="lg:hidden flex bg-white p-3 gap-2 border-b border-gray-100 shrink-0">
+        <button
+          type="button"
+          onClick={() => setMonitorTab('tables')}
+          className={`flex-1 py-3.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 border cursor-pointer ${
+            monitorTab === 'tables'
+            ? 'bg-orange-600 text-white border-orange-600 shadow-md'
+            : 'bg-white text-gray-500 border-gray-100 hover:bg-gray-50'
+          }`}
+        >
+          <span>🍽️ Mesas ({occupiedTablesCount})</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setMonitorTab('togo')}
+          className={`flex-1 py-3.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 border cursor-pointer ${
+            monitorTab === 'togo'
+            ? 'bg-orange-600 text-white border-orange-600 shadow-md'
+            : 'bg-white text-gray-500 border-gray-100 hover:bg-gray-50'
+          }`}
+        >
+          <span>📦 Llevar ({toGoOrdersCount})</span>
+        </button>
+      </div>
+
+      {/* Panel Principal de Monitoreo (Izquierda - Dividido en tarjetas independientes) */}
+      <div className="flex-1 p-6 md:p-8 overflow-y-auto custom-scrollbar border-r border-gray-100 flex flex-col lg:flex-row gap-6 lg:gap-8 bg-gray-50/50">
         
-        {/* Sub-panel 1: Mesas del Salón (Izquierda) */}
-        <div className="flex-1 flex flex-col min-w-0">
+        {/* Tarjeta 1: Mesas del Salón */}
+        <div className={`flex-1 bg-white p-6 sm:p-8 rounded-[2.5rem] border border-gray-200/60 shadow-sm flex flex-col min-w-0 ${
+          monitorTab === 'tables' ? 'flex' : 'hidden lg:flex'
+        }`}>
           <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h3 className="text-xl font-black text-gray-800 tracking-tighter uppercase italic">Monitoreo de Mesas</h3>
+              <h3 className="text-xl font-black text-gray-800 tracking-tight uppercase italic flex items-center gap-2">
+                🍽️ Monitoreo de Mesas
+              </h3>
               <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Estado de mesas en tiempo real</p>
             </div>
             
@@ -925,7 +961,7 @@ const LiveMonitor = ({ setConfirmAction }) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 xl:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 xl:gap-6">
             {([...tables].filter(t => t.number !== 0).sort((a, b) => a.number - b.number)).map(table => {
               const isOcupada = activeOrders.some(o => o.tableId === table.id && o.floor === selectedFloor);
               const orders = activeOrders.filter(o => o.tableId === table.id && o.floor === selectedFloor);
@@ -949,7 +985,7 @@ const LiveMonitor = ({ setConfirmAction }) => {
                     ? 'border-orange-500 ring-2 ring-orange-500 bg-orange-50/20'
                     : isOcupada
                       ? 'bg-orange-50/50 border-orange-100'
-                      : 'bg-white border-gray-100 hover:border-orange-200'
+                      : 'bg-white border-gray-100 hover:border-orange-200 hover:shadow-md'
                   }`}
                 >
                   <div>
@@ -989,11 +1025,10 @@ const LiveMonitor = ({ setConfirmAction }) => {
           </div>
         </div>
 
-        {/* Divisor Vertical */}
-        <div className="hidden md:block w-[1.5px] bg-gray-200/60 self-stretch my-2 shrink-0" />
-
-        {/* Sub-panel 2: Pedidos para Llevar (Derecha del monitor) */}
-        <div className="w-full md:w-72 xl:w-[360px] flex flex-col shrink-0">
+        {/* Tarjeta 2: Pedidos para Llevar */}
+        <div className={`w-full lg:w-[340px] xl:w-[380px] bg-white p-6 sm:p-8 rounded-[2.5rem] border border-gray-200/60 shadow-sm flex flex-col shrink-0 ${
+          monitorTab === 'togo' ? 'flex' : 'hidden lg:flex'
+        }`}>
           <div className="mb-6">
             <h3 className="text-xl font-black text-gray-800 uppercase italic tracking-normal flex items-center gap-2">
               <span>📦</span> Pedidos para Llevar
@@ -1005,11 +1040,11 @@ const LiveMonitor = ({ setConfirmAction }) => {
 
           <div className="flex-1 space-y-4 pr-1">
             {activeOrders.filter(o => o.toGo).length === 0 ? (
-              <div className="bg-gray-50/50 border-2 border-dashed border-gray-100 p-8 rounded-[2rem] text-center text-gray-400 font-bold italic text-xs">
+              <div className="bg-gray-50 border border-gray-100 p-8 rounded-[2rem] text-center text-gray-400 font-bold italic text-xs">
                 No hay pedidos para llevar activos
               </div>
             ) : (
-              <div className="flex flex-col gap-4 overflow-y-auto max-h-[70vh] pr-2 custom-scrollbar">
+              <div className="flex flex-col gap-4 overflow-y-auto max-h-[50vh] xl:max-h-none pr-2 custom-scrollbar">
                 {activeOrders.filter(o => o.toGo).map(order => {
                   return (
                     <button
@@ -1067,8 +1102,8 @@ const LiveMonitor = ({ setConfirmAction }) => {
 
       </div>
 
-      {/* Cuenta y Facturación (Derecha - Solo Desktop) */}
-      <div className="hidden lg:flex lg:w-[450px] bg-gray-50/30 flex-col overflow-hidden h-full border-l border-gray-100 shrink-0">
+      {/* Cuenta y Facturación (Derecha - Solo Desktop XL) */}
+      <div className="hidden xl:flex xl:w-[420px] bg-gray-50/30 flex-col overflow-hidden h-full border-l border-gray-100 shrink-0">
         {selectedTable && liveTableStatus === 'OCUPADA' ? (
           <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-300 bg-white">
             {/* Detalle Consumos */}
@@ -1220,17 +1255,17 @@ const LiveMonitor = ({ setConfirmAction }) => {
         )}
       </div>
 
-      {/* Modal de Detalles para Mobile/Tablet */}
+      {/* Modal de Detalles para Mobile/Tablet/Laptop < XL */}
       {isMobileOpen && selectedTable && liveTableStatus === 'OCUPADA' && (
-        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 lg:hidden animate-in fade-in duration-300">
+        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 xl:hidden animate-in fade-in duration-300">
           <div className="bg-white rounded-[2.5rem] p-6 w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-300 relative max-h-[90vh] flex flex-col overflow-hidden">
             
             {/* Header del Modal */}
             <div className="flex justify-between items-center pb-4 border-b border-gray-100 shrink-0">
               <div>
-                <h3 className="text-xl font-black text-gray-800 tracking-tighter uppercase italic">Mesa {selectedTable.number} - Piso {selectedTable.floor}</h3>
+                <h3 className="text-xl font-black text-gray-800 tracking-tighter uppercase italic">{selectedTable.number === 0 ? '📦 PEDIDO PARA LLEVAR' : `Mesa ${selectedTable.number} - Piso ${selectedTable.floor}`}</h3>
                 <div className="flex flex-col gap-1 mt-1">
-                  <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest leading-none">Consumos activos de mesa</p>
+                  <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest leading-none">{selectedTable.number === 0 ? 'Detalles de comanda rápida' : 'Consumos activos de mesa'}</p>
                   {oldestOrder && (
                     <div className="flex items-center gap-1.5 z-10">
                       <span className="text-[10px] text-black font-black uppercase tracking-wider">
