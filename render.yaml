@@ -17,7 +17,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: NODE_VERSION
-        value: 20.15.0
+        value: "20.15.0"
 
   # 2. Frontend Service (Vite + React Static Site)
   - type: web
@@ -33,7 +33,7 @@ services:
           name: el-mana-backend
           property: host
       - key: NODE_VERSION
-        value: 20.15.0
+        value: "20.15.0"
 
 databases:
   - name: el-mana-db
